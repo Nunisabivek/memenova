@@ -16,6 +16,7 @@
     "dev:backend": "npm run -w @memenova/backend dev",
     "dev:worker": "npm run -w @memenova/worker dev",
     "start": "npm run -w @memenova/backend start",
+    "postinstall": "npm run -w @memenova/backend prisma:generate",
     "prisma:generate": "npm run -w @memenova/backend prisma:generate",
     "prisma:migrate": "npm run -w @memenova/backend prisma:migrate",
     "lint": "echo 'Add ESLint per package'",
