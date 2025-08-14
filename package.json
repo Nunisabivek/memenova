@@ -1,0 +1,26 @@
+{
+  "name": "memenova",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "backend/worker",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run -w @memenova/frontend build && npm run -w @memenova/backend build && npm run -w @memenova/worker build",
+    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\" \"npm:dev:worker\"",
+    "dev:frontend": "npm run -w @memenova/frontend dev",
+    "dev:backend": "npm run -w @memenova/backend dev",
+    "dev:worker": "npm run -w @memenova/worker dev",
+    "prisma:generate": "npm run -w @memenova/backend prisma:generate",
+    "prisma:migrate": "npm run -w @memenova/backend prisma:migrate",
+    "lint": "echo 'Add ESLint per package'",
+    "typecheck": "echo 'Add TS typecheck per package'"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+

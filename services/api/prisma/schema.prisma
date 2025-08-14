@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  plan      String   @default("free")
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  projects  Project[]
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  ownerId     String
+  type        String   // image | video
+  prompt      String
+  humor       String
+  status      String   @default("draft")
+  settings    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  owner       User     @relation(fields: [ownerId], references: [id])
+  generations Generation[]
+  renders     Render[]
+}
+
+model Generation {
+  id        String   @id @default(cuid())
+  projectId String
+  provider  String
+  input     Json
+  outputs   Json
+  costMs    Int      @default(0)
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id])
+}
+
+model Render {
+  id        String   @id @default(cuid())
+  projectId String
+  size      String
+  duration  Int      @default(0)
+  status    String   @default("pending")
+  jobId     String?
+  s3Key     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id])
+}
+
+
