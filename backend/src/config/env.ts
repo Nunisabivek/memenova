@@ -2,16 +2,16 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().url().optional(),
   
   // AI Providers
-  OPENAI_API_KEY: z.string().min(1),
-  GEMINI_API_KEY: z.string().min(1),
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  GEMINI_API_KEY: z.string().min(1).optional(),
   
   // App Config
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().transform(Number).default('3001'),
-  JWT_SECRET: z.string().min(32),
+  JWT_SECRET: z.string().min(32).optional(),
   
   // Storage
   SUPABASE_URL: z.string().url().optional(),
@@ -34,4 +34,7 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>
 
-export const env = envSchema.parse(process.env)
+// Only validate env in runtime, not during build
+export const env = process.env.NODE_ENV === 'production' && !process.env.SKIP_ENV_VALIDATION 
+  ? envSchema.parse(process.env)
+  : envSchema.safeParse(process.env).data || {}

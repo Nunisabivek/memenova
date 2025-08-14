@@ -28,8 +28,20 @@ export class MemeGeneratorService {
     const startTime = Date.now()
     
     try {
-      // Create or update project
-      const project = await this.createOrUpdateProject(request)
+      // Create or update project (if database available)
+      let project = null
+      if (db) {
+        project = await this.createOrUpdateProject(request)
+      } else {
+        // Mock project for database-less mode
+        project = {
+          id: `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          ownerId: request.userId,
+          prompt: request.prompt,
+          humor: request.humor,
+          status: 'GENERATING'
+        }
+      }
       
       // Generate meme content using selected AI provider
       const provider = request.provider || Prisma.Provider.OPENAI
@@ -57,47 +69,49 @@ export class MemeGeneratorService {
       
       const duration = Date.now() - startTime
       
-      // Save generation record
-      await db.generation.create({
-        data: {
-          projectId: project.id,
-          provider,
-          model: provider === Prisma.Provider.OPENAI ? 'gpt-4o-mini' : 'gemini-1.5-flash',
-          input: {
-            prompt: request.prompt,
-            humor: request.humor,
-            imageUrl: request.imageUrl,
+      // Save generation record (if database available)
+      if (db) {
+        await db.generation.create({
+          data: {
+            projectId: project.id,
+            provider,
+            model: provider === Prisma.Provider.OPENAI ? 'gpt-4o-mini' : 'gemini-1.5-flash',
+            input: {
+              prompt: request.prompt,
+              humor: request.humor,
+              imageUrl: request.imageUrl,
+            },
+            output: {
+              text: memeContent.text,
+              imagePrompt: memeContent.imagePrompt,
+              suggestions: memeContent.suggestions,
+              imageUrl,
+            },
+            tokens: memeContent.tokens,
+            cost: memeContent.cost,
+            duration,
+            success: true,
           },
-          output: {
-            text: memeContent.text,
-            imagePrompt: memeContent.imagePrompt,
-            suggestions: memeContent.suggestions,
-            imageUrl,
+        })
+        
+        // Update project with results
+        await db.project.update({
+          where: { id: project.id },
+          data: {
+            resultUrl: imageUrl,
+            status: 'COMPLETED',
           },
-          tokens: memeContent.tokens,
-          cost: memeContent.cost,
-          duration,
-          success: true,
-        },
-      })
-      
-      // Update project with results
-      await db.project.update({
-        where: { id: project.id },
-        data: {
-          resultUrl: imageUrl,
-          status: 'COMPLETED',
-        },
-      })
-      
-      // Update user stats
-      await db.user.update({
-        where: { id: request.userId },
-        data: {
-          totalMemes: { increment: 1 },
-          credits: { decrement: 1 },
-        },
-      })
+        })
+        
+        // Update user stats
+        await db.user.update({
+          where: { id: request.userId },
+          data: {
+            totalMemes: { increment: 1 },
+            credits: { decrement: 1 },
+          },
+        })
+      }
       
       return {
         id: project.id,
@@ -111,8 +125,8 @@ export class MemeGeneratorService {
     } catch (error) {
       console.error('Meme generation error:', error)
       
-      // Save failed generation
-      if (request.projectId) {
+      // Save failed generation (if database available)
+      if (db && request.projectId) {
         await db.generation.create({
           data: {
             projectId: request.projectId,
@@ -134,6 +148,8 @@ export class MemeGeneratorService {
   }
   
   private async createOrUpdateProject(request: GenerateMemeRequest) {
+    if (!db) throw new Error('Database not available')
+    
     if (request.projectId) {
       return await db.project.update({
         where: { id: request.projectId },
@@ -158,6 +174,8 @@ export class MemeGeneratorService {
   }
   
   async getUserProjects(userId: string, limit = 20, offset = 0) {
+    if (!db) return []
+    
     return await db.project.findMany({
       where: { ownerId: userId },
       include: {
@@ -178,6 +196,8 @@ export class MemeGeneratorService {
   }
   
   async getProjectById(projectId: string, userId: string) {
+    if (!db) return null
+    
     return await db.project.findFirst({
       where: {
         id: projectId,
@@ -195,6 +215,8 @@ export class MemeGeneratorService {
   }
   
   async deleteProject(projectId: string, userId: string) {
+    if (!db) throw new Error('Database not available')
+    
     const project = await db.project.findFirst({
       where: {
         id: projectId,

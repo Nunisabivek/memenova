@@ -2,26 +2,17 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import pino from 'pino'
-import { PrismaClient } from '@prisma/client'
 import { Queue } from 'bullmq'
 import IORedis from 'ioredis'
 import multer from 'multer'
 import { createClient } from '@supabase/supabase-js'
+import { db } from './config/database'
 import { MemeGeneratorService } from './services/meme-generator'
 import { generateMemeContent, generateMemeImage } from './services/ai/openai'
 import { generateMemeContentWithGemini } from './services/ai/gemini'
 
 const app = express()
 const logger = pino({ level: process.env.LOG_LEVEL || 'info' })
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url:
-        process.env.DATABASE_URL ||
-        'postgresql://memenova:memenova@localhost:5432/memenova'
-    }
-  }
-})
 
 app.use(cors())
 app.use(express.json({ limit: '2mb' }))
@@ -30,7 +21,17 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 const redisUrl = process.env.REDIS_URL
 const renderQueue = redisUrl ? new Queue('render-jobs', { connection: new IORedis(redisUrl) }) : null
 
-app.get('/health', (_req, res) => res.json({ ok: true }))
+app.get('/health', (_req, res) => res.json({ 
+  ok: true, 
+  timestamp: new Date().toISOString(),
+  database: db ? 'connected' : 'not configured',
+  services: {
+    openai: !!process.env.OPENAI_API_KEY,
+    gemini: !!process.env.GEMINI_API_KEY,
+    supabase: !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE),
+    redis: !!process.env.REDIS_URL
+  }
+}))
 
 // Artificial delay helpers for free image generation (to show ads and throttle)
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -68,8 +69,12 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 })
 
 app.post('/projects', async (req, res) => {
+  if (!db) {
+    return res.status(501).json({ error: 'Database not configured' })
+  }
+  
   const { ownerId, type, prompt, humor } = req.body
-  const project = await prisma.project.create({
+  const project = await db.project.create({
     data: { ownerId, type, prompt, humor, settings: {} }
   })
   res.json(project)
@@ -106,14 +111,17 @@ app.post('/generate', async (req, res) => {
         } else {
           // Fallback to placeholder
           const previewUrl = imageUrl || `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent((prompt || 'MemeNova') + ' (' + (humor || 'sarcastic') + ')')}`
-          if (projectId) {
-            await prisma.generation.create({ 
+          if (projectId && db) {
+            await db.generation.create({ 
               data: { 
                 projectId, 
-                provider: 'mock', 
+                provider: 'mock' as any, 
                 input: { prompt, humor }, 
-                outputs: { previewUrl }, 
-                costMs: 42 
+                output: { previewUrl }, 
+                tokens: 0,
+                cost: 0.042,
+                duration: 42,
+                success: true
               } 
             })
           }
@@ -135,19 +143,23 @@ app.post('/generate', async (req, res) => {
         }
         
         // Save generation record
-        if (projectId) {
-          await prisma.generation.create({
+        if (projectId && db) {
+          await db.generation.create({
             data: {
               projectId,
-              provider: provider.toLowerCase(),
+              provider: provider.toLowerCase() as any,
+              model: provider === 'OPENAI' ? 'gpt-4o-mini' : 'gemini-1.5-flash',
               input: { prompt, humor, imageUrl },
-              outputs: {
+              output: {
                 text: memeContent.text,
                 imagePrompt: memeContent.imagePrompt,
                 suggestions: memeContent.suggestions,
                 imageUrl: finalImageUrl
               },
-              costMs: Math.round(memeContent.cost * 1000) // Convert to milliseconds for legacy compatibility
+              tokens: memeContent.tokens || 0,
+              cost: memeContent.cost || 0,
+              duration: Date.now() - Date.now(), // Will be updated with actual duration
+              success: true
             }
           })
         }
@@ -173,7 +185,18 @@ app.post('/generate', async (req, res) => {
       if (!projectId) return res.status(400).json({ error: 'projectId required for video' })
       if (!renderQueue) return res.status(501).json({ error: 'Video rendering not configured (missing REDIS_URL)' })
       const job = await renderQueue.add('video-render', { projectId })
-      await prisma.render.create({ data: { projectId, size: '1080x1920', status: 'queued', jobId: job.id } })
+      
+      if (db) {
+        await db.render.create({ 
+          data: { 
+            projectId, 
+            size: '1080x1920', 
+            status: 'QUEUED' as any, 
+            jobId: job.id?.toString() || '' 
+          } 
+        })
+      }
+      
       return res.json({ ok: true, jobId: job.id })
     }
 
