@@ -8,52 +8,229 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  plan      String   @default("free")
-  locale    String   @default("en")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  projects  Project[]
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  avatar        String?
+  plan          Plan      @default(FREE)
+  planExpiresAt DateTime?
+  locale        String    @default("en")
+  credits       Int       @default(10)
+  totalMemes    Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  projects      Project[]
+  subscriptions Subscription[]
+  analytics     UserAnalytics[]
+  
+  @@map("users")
 }
 
 model Project {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   ownerId     String
-  type        String   // image | video
+  title       String?
+  type        ProjectType @default(IMAGE)
   prompt      String
-  humor       String
-  status      String   @default("draft")
-  settings    Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  owner       User     @relation(fields: [ownerId], references: [id])
+  humor       HumorStyle  @default(SARCASTIC)
+  status      Status      @default(DRAFT)
+  settings    Json        @default("{}")
+  imageUrl    String?
+  resultUrl   String?
+  isPublic    Boolean     @default(false)
+  likes       Int         @default(0)
+  views       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relations
+  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   generations Generation[]
   renders     Render[]
+  tags        ProjectTag[]
+  
+  @@map("projects")
 }
 
 model Generation {
   id        String   @id @default(cuid())
   projectId String
-  provider  String
+  provider  Provider @default(OPENAI)
+  model     String   @default("gpt-4")
   input     Json
-  outputs   Json
-  costMs    Int      @default(0)
+  output    Json
+  tokens    Int      @default(0)
+  cost      Float    @default(0)
+  duration  Int      @default(0) // milliseconds
+  success   Boolean  @default(true)
+  error     String?
   createdAt DateTime @default(now())
-  project   Project  @relation(fields: [projectId], references: [id])
+  
+  // Relations
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("generations")
 }
 
 model Render {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   projectId String
-  size      String
-  duration  Int      @default(0)
-  status    String   @default("pending")
+  size      String      @default("1024x1024")
+  format    String      @default("png")
+  quality   Int         @default(100)
+  duration  Int         @default(0)
+  status    RenderStatus @default(PENDING)
   jobId     String?
   s3Key     String?
+  url       String?
+  fileSize  Int?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  // Relations
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("renders")
+}
+
+model Subscription {
+  id                String   @id @default(cuid())
+  userId            String
+  plan              Plan
+  status            SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime
+  currentPeriodEnd  DateTime
+  cancelAtPeriodEnd Boolean  @default(false)
+  stripeSubscriptionId String? @unique
+  stripeCustomerId  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("subscriptions")
+}
+
+model Template {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  imageUrl    String
+  prompt      String
+  humor       HumorStyle
+  settings    Json         @default("{}")
+  isPublic    Boolean      @default(true)
+  isPremium   Boolean      @default(false)
+  uses        Int          @default(0)
+  rating      Float        @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  // Relations
+  tags        TemplateTag[]
+  
+  @@map("templates")
+}
+
+model Tag {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  color       String        @default("#6B7280")
+  createdAt   DateTime      @default(now())
+  
+  // Relations
+  projects    ProjectTag[]
+  templates   TemplateTag[]
+  
+  @@map("tags")
+}
+
+model ProjectTag {
+  projectId String
+  tagId     String
+  
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([projectId, tagId])
+  @@map("project_tags")
+}
+
+model TemplateTag {
+  templateId String
+  tagId      String
+  
+  // Relations
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([templateId, tagId])
+  @@map("template_tags")
+}
+
+model UserAnalytics {
+  id        String   @id @default(cuid())
+  userId    String
+  event     String
+  data      Json     @default("{}")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  project   Project  @relation(fields: [projectId], references: [id])
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_analytics")
+}
+
+// Enums
+enum Plan {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum ProjectType {
+  IMAGE
+  VIDEO
+}
+
+enum HumorStyle {
+  SARCASTIC
+  PUNNY
+  WHOLESOME
+  SAVAGE
+  RELATABLE
+}
+
+enum Status {
+  DRAFT
+  GENERATING
+  COMPLETED
+  FAILED
+}
+
+enum Provider {
+  OPENAI
+  GEMINI
+  ANTHROPIC
+}
+
+enum RenderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  UNPAID
 }
 
 
