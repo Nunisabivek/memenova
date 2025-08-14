@@ -1,7 +1,9 @@
 import { db } from '../config/database'
 import { generateMemeContent, generateMemeImage } from './ai/openai'
 import { generateMemeContentWithGemini } from './ai/gemini'
-import { Provider } from '@prisma/client'
+import pkg from '@prisma/client'
+const { Prisma } = pkg
+type Provider = typeof Prisma.Provider[keyof typeof Prisma.Provider]
 
 export interface GenerateMemeRequest {
   userId: string
@@ -30,10 +32,10 @@ export class MemeGeneratorService {
       const project = await this.createOrUpdateProject(request)
       
       // Generate meme content using selected AI provider
-      const provider = request.provider || Provider.OPENAI
+      const provider = request.provider || Prisma.Provider.OPENAI
       let memeContent
       
-      if (provider === Provider.GEMINI) {
+      if (provider === Prisma.Provider.GEMINI) {
         memeContent = await generateMemeContentWithGemini({
           prompt: request.prompt,
           humor: request.humor,
@@ -49,7 +51,7 @@ export class MemeGeneratorService {
       
       // Generate image if no image provided
       let imageUrl = request.imageUrl
-      if (!imageUrl && provider === Provider.OPENAI) {
+      if (!imageUrl && provider === Prisma.Provider.OPENAI) {
         imageUrl = await generateMemeImage(memeContent.imagePrompt)
       }
       
@@ -60,7 +62,7 @@ export class MemeGeneratorService {
         data: {
           projectId: project.id,
           provider,
-          model: provider === Provider.OPENAI ? 'gpt-4o-mini' : 'gemini-1.5-flash',
+          model: provider === Prisma.Provider.OPENAI ? 'gpt-4o-mini' : 'gemini-1.5-flash',
           input: {
             prompt: request.prompt,
             humor: request.humor,
@@ -114,7 +116,7 @@ export class MemeGeneratorService {
         await db.generation.create({
           data: {
             projectId: request.projectId,
-            provider: request.provider || Provider.OPENAI,
+            provider: request.provider || Prisma.Provider.OPENAI,
             model: 'unknown',
             input: { prompt: request.prompt, humor: request.humor },
             output: {},
