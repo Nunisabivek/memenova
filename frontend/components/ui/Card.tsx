@@ -1,9 +1,9 @@
 "use client"
 import React from 'react'
-import { motion } from 'framer-motion'
+import { motion, type HTMLMotionProps } from 'framer-motion'
 import { clsx } from 'clsx'
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardProps extends HTMLMotionProps<'div'> {
   variant?: 'default' | 'elevated' | 'outlined' | 'glass'
   hover?: boolean
   children: React.ReactNode
