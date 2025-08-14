@@ -207,6 +207,12 @@ app.post('/generate', async (req, res) => {
   }
 })
 
-const port = Number(process.env.PORT || 4000)
-app.listen(port, () => logger.info({ port }, 'API listening'))
+const port = Number(process.env.PORT || 3000)
+const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost'
+
+app.listen(port, host, () => {
+  logger.info({ port, host, env: process.env.NODE_ENV }, 'API listening')
+  console.log(`🚀 Server running on http://${host}:${port}`)
+  console.log(`📊 Health check: http://${host}:${port}/health`)
+})
 
