@@ -2,6 +2,7 @@
   "name": "memenova",
   "private": true,
   "version": "0.1.0",
+  "packageManager": "npm@10.8.2",
   "workspaces": [
     "frontend",
     "backend",
@@ -14,13 +15,15 @@
     "dev:frontend": "npm run -w @memenova/frontend dev",
     "dev:backend": "npm run -w @memenova/backend dev",
     "dev:worker": "npm run -w @memenova/worker dev",
+    "start": "npm run -w @memenova/backend start",
     "prisma:generate": "npm run -w @memenova/backend prisma:generate",
     "prisma:migrate": "npm run -w @memenova/backend prisma:migrate",
     "lint": "echo 'Add ESLint per package'",
     "typecheck": "echo 'Add TS typecheck per package'"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "turbo": "^2.5.4"
   }
 }
 
