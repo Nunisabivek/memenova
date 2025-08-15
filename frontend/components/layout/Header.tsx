@@ -5,6 +5,7 @@ import axios from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Zap, Sparkles, Crown } from 'lucide-react'
 import { Button } from '../ui/Button'
+import { AccountMenu } from './AccountMenu'
 import { Input } from '../ui/Input'
 
 export function Header() {
@@ -65,6 +66,7 @@ export function Header() {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="text-xs text-secondary-600 mr-2">{plan ? `Plan: ${plan}` : ''}</div>
+            {plan ? <AccountMenu /> : null}
             {!plan ? (
               <>
                 <Button variant="outline" size="sm" onClick={() => setShowAuth(true)}>
