@@ -189,7 +189,7 @@ app.post('/generate', async (req, res) => {
           // If user uploaded an image, compose meme text onto it
           if (finalImageUrl) {
             try {
-              renderedBuffer = await composeMemeOnImage({ imageUrl: finalImageUrl, text: memeContent?.text })
+              renderedBuffer = await composeMemeOnImage({ imageUrl: finalImageUrl, text: memeContent?.text || prompt })
             } catch (e) {
               logger.warn({ err: e }, 'composeMemeOnImage failed, falling back to URL')
             }

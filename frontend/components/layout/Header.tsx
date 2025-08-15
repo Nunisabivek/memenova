@@ -13,6 +13,7 @@ export function Header() {
   const [email, setEmail] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [authMsg, setAuthMsg] = useState<string | null>(null)
+  const plan = (typeof window !== 'undefined') ? (localStorage.getItem('userPlan') || '') : ''
 
   const navigation = [
     { name: 'Studio', href: '/studio', icon: Sparkles },
@@ -63,10 +64,17 @@ export function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={() => setShowAuth(true)}>
-              Sign In
-            </Button>
-            <Link href="/studio"><Button size="sm" className="hero-glow">Get Started</Button></Link>
+            <div className="text-xs text-secondary-600 mr-2">{plan ? `Plan: ${plan}` : ''}</div>
+            {!plan ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setShowAuth(true)}>
+                  Sign In
+                </Button>
+                <Link href="/studio"><Button size="sm" className="hero-glow">Get Started</Button></Link>
+              </>
+            ) : (
+              <Link href="/studio"><Button size="sm" className="hero-glow">Create</Button></Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -111,10 +119,19 @@ export function Header() {
                 </motion.div>
               ))}
               <div className="pt-4 space-y-3">
-                <Button variant="outline" className="w-full" onClick={() => { setShowAuth(true); setIsMenuOpen(false) }}>
-                  Sign In
-                </Button>
-                <Link href="/studio" className="w-full block"><Button className="w-full hero-glow">Get Started</Button></Link>
+                {!plan ? (
+                  <>
+                    <Button variant="outline" className="w-full" onClick={() => { setShowAuth(true); setIsMenuOpen(false) }}>
+                      Sign In
+                    </Button>
+                    <Link href="/studio" className="w-full block"><Button className="w-full hero-glow">Get Started</Button></Link>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-sm text-secondary-600">Plan: {plan}</div>
+                    <Link href="/studio" className="w-full block"><Button className="w-full hero-glow">Create</Button></Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
