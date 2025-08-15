@@ -1,4 +1,6 @@
 "use client"
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
   Check, 
@@ -15,6 +17,15 @@ import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader } from '../../components/ui/Card'
 
 export default function PricingPage() {
+  const router = useRouter()
+  useEffect(() => {
+    try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+      if (userId) {
+        router.replace('/studio')
+      }
+    } catch {}
+  }, [router])
   const plans = [
     {
       name: 'Free',
