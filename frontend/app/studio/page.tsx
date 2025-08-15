@@ -19,6 +19,7 @@ import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader } from '../../components/ui/Card'
 import { Textarea, Input } from '../../components/ui/Input'
 import { AdSlot } from '../../components/AdSlot'
+import { CoolLoadingIndicator } from '../../components/ui/CoolLoadingIndicator'
 
 export default function StudioPage() {
   const [prompt, setPrompt] = useState('When the sprint ends but the bugs start')
@@ -419,12 +420,20 @@ export default function StudioPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             >
-              <div className="w-full max-w-2xl card glass p-4">
-                <p className="text-center text-sm text-secondary-700 mb-3">Generating your {type==='video'?'video':'meme'}... please wait 5–10s</p>
-        <AdSlot adFormat="auto" style={{ display: 'block' }} />
-      </div>
+              <div className="w-full max-w-4xl rounded-2xl bg-white/80 backdrop-blur-lg shadow-2xl p-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="text-center md:text-left">
+                  <CoolLoadingIndicator />
+                </div>
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <p className="text-sm font-medium text-secondary-700">Sponsored Content</p>
+                  <div className="w-full h-64 bg-secondary-100 rounded-lg flex items-center justify-center">
+                    <AdSlot adFormat="auto" style={{ display: 'block', width: '100%', height: '100%' }} />
+                  </div>
+                  <p className="text-xs text-secondary-500 text-center">Your meme will appear once generation is complete. Thanks for your patience!</p>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
