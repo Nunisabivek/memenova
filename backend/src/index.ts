@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 import { db } from './config/database'
 import { MemeGeneratorService } from './services/meme-generator'
 import { generateMemeContent, generateMemeImage } from './services/ai/openai'
+import { fetchTopTemplates, composeTemplateMeme } from './services/meme-template'
 import { generateMemeContentWithGemini } from './services/ai/gemini'
 import usersRouter from './routes/users'
 import memesRouter from './routes/memes'
@@ -114,7 +115,7 @@ const memeService = new MemeGeneratorService()
 
 app.post('/generate', async (req, res) => {
   try {
-    let { projectId, type, prompt, humor, imageUrl, provider = 'GEMINI', slangLevel = 'light', userId, ownerId } = req.body
+    let { projectId, type, prompt, humor, imageUrl, provider = 'GEMINI', slangLevel = 'light', userId, ownerId, style = 'AI_IMAGE', topText, bottomText, templateUrl } = req.body
     // Prefer explicit userId, fallback to ownerId, else anonymous
     userId = userId || ownerId || 'anonymous'
     
@@ -124,55 +125,46 @@ app.post('/generate', async (req, res) => {
 
     if (type === 'image') {
       try {
-        // Use our enhanced AI generation
-        let memeContent
-        if (provider === 'GEMINI' && process.env.GEMINI_API_KEY) {
-          memeContent = await generateMemeContentWithGemini({
-            prompt,
-            humor,
-            imageUrl,
-            slangLevel,
-          })
-        } else if (process.env.OPENAI_API_KEY) {
-          memeContent = await generateMemeContent({
-            prompt,
-            humor,
-            imageUrl,
-            slangLevel,
-          })
-        } else {
-          // Fallback to placeholder
-          const previewUrl = imageUrl || `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent((prompt || 'MemeNova') + ' (' + (humor || 'sarcastic') + ')')}`
-          if (projectId && db) {
-            await db.generation.create({ 
-              data: { 
-                projectId, 
-                provider: 'mock' as any, 
-                input: { prompt, humor }, 
-                output: { previewUrl }, 
-                tokens: 0,
-                cost: 0.042,
-                duration: 42,
-                success: true
-              } 
-            })
+        let memeContent: any = null
+        let finalImageUrl: string | undefined = imageUrl
+        let renderedBuffer: Buffer | null = null
+
+        if (style === 'TEMPLATE') {
+          const templates = await fetchTopTemplates(100)
+          if (!topText || !bottomText) {
+            if (provider === 'GEMINI' && process.env.GEMINI_API_KEY) {
+              memeContent = await generateMemeContentWithGemini({ prompt, humor, imageUrl, slangLevel })
+            } else if (process.env.OPENAI_API_KEY) {
+              memeContent = await generateMemeContent({ prompt, humor, imageUrl, slangLevel })
+            }
+            const text = (memeContent?.text || prompt || '').trim()
+            const midpoint = Math.floor(text.length / 2)
+            topText = topText || text.slice(0, midpoint)
+            bottomText = bottomText || text.slice(midpoint)
           }
-          await sleep(randomDelayMs())
-          return res.json({ ok: true, previewUrl })
-        }
-        
-        // Generate image if OpenAI is available and no image provided
-        let finalImageUrl = imageUrl
-        if (!finalImageUrl && process.env.OPENAI_API_KEY) {
-          try {
-            // Pass both image prompt and text to get text overlay
-            finalImageUrl = await generateMemeImage(memeContent.imagePrompt, memeContent.text)
-          } catch (error) {
-            logger.warn('Image generation with DALL-E failed, using placeholder', error)
+          const selected = templateUrl || templates[0]?.Url
+          if (!selected) return res.status(500).json({ error: 'No template available' })
+          renderedBuffer = await composeTemplateMeme({ templateUrl: selected, topText, bottomText })
+        } else {
+          if (provider === 'GEMINI' && process.env.GEMINI_API_KEY) {
+            memeContent = await generateMemeContentWithGemini({ prompt, humor, imageUrl, slangLevel })
+          } else if (process.env.OPENAI_API_KEY) {
+            memeContent = await generateMemeContent({ prompt, humor, imageUrl, slangLevel })
+          } else {
+            const previewUrl = imageUrl || `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent((prompt || 'MemeNova') + ' (' + (humor || 'sarcastic') + ')')}`
+            await sleep(randomDelayMs())
+            return res.json({ ok: true, previewUrl })
+          }
+          if (!finalImageUrl && process.env.OPENAI_API_KEY) {
+            try {
+              finalImageUrl = await generateMemeImage(memeContent.imagePrompt, memeContent.text)
+            } catch (error) {
+              logger.warn('Image generation with DALL-E failed, using placeholder', error)
+              finalImageUrl = `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent(memeContent.text)}`
+            }
+          } else if (!finalImageUrl) {
             finalImageUrl = `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent(memeContent.text)}`
           }
-        } else if (!finalImageUrl) {
-          finalImageUrl = `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent(memeContent.text)}`
         }
         
         // Auto-create project for signed-in users if not provided
@@ -190,15 +182,15 @@ app.post('/generate', async (req, res) => {
               projectId,
               provider: provider.toLowerCase() as any,
               model: provider === 'OPENAI' ? 'gpt-4o-mini' : 'gemini-1.5-flash',
-              input: { prompt, humor, imageUrl },
+              input: { prompt, humor, imageUrl, style, topText, bottomText, templateUrl },
               output: {
-                text: memeContent.text,
-                imagePrompt: memeContent.imagePrompt,
-                suggestions: memeContent.suggestions,
-                imageUrl: finalImageUrl
+                text: memeContent?.text,
+                imagePrompt: memeContent?.imagePrompt,
+                suggestions: memeContent?.suggestions,
+                imageUrl: renderedBuffer ? undefined : finalImageUrl
               },
-              tokens: memeContent.tokens || 0,
-              cost: memeContent.cost || 0,
+              tokens: memeContent?.tokens || 0,
+              cost: memeContent?.cost || 0,
               duration: Date.now() - Date.now(), // Will be updated with actual duration
               success: true
             }
@@ -207,17 +199,16 @@ app.post('/generate', async (req, res) => {
           // Update project with results
           await db.project.update({
             where: { id: projectId },
-            data: { resultUrl: finalImageUrl, status: 'COMPLETED' as any }
+            data: { resultUrl: renderedBuffer ? '' : (finalImageUrl || ''), status: 'COMPLETED' as any }
           })
         }
         
         await sleep(randomDelayMs())
-        return res.json({ 
-          ok: true, 
-          previewUrl: finalImageUrl,
-          text: memeContent.text,
-          suggestions: memeContent.suggestions
-        })
+        if (renderedBuffer) {
+          res.setHeader('Content-Type', 'image/jpeg')
+          return res.end(renderedBuffer)
+        }
+        return res.json({ ok: true, previewUrl: finalImageUrl, text: memeContent?.text, suggestions: memeContent?.suggestions })
         
       } catch (aiError) {
         logger.error('AI generation failed:', aiError)
