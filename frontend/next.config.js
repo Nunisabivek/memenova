@@ -8,16 +8,14 @@ const nextConfig = {
     ]
   },
   async rewrites() {
-    // Dev proxy to local backend if NEXT_PUBLIC_API_URL not set
-    if (!process.env.NEXT_PUBLIC_API_URL) {
-      return [
-        {
-          source: '/api/:path*',
-          destination: 'http://localhost:4000/:path*'
-        }
-      ]
-    }
-    return []
+    // Proxy ALL /api/* calls to the backend URL in every environment
+    const backend = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backend}/:path*`
+      }
+    ]
   }
 }
 
