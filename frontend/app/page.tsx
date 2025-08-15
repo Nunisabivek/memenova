@@ -75,7 +75,13 @@ export default function HomePage() {
   const [metrics, setMetrics] = React.useState<{ totals: { users: number, projects: number, memes: number } } | null>(null)
   useEffect(() => {
     const url = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api/metrics` : '/api/metrics'
-    fetch(url).then(r => r.json()).then(setMetrics).catch(() => {})
+    fetch(url)
+      .then(async (r) => {
+        if (!r.ok) return null
+        try { return await r.json() } catch { return null }
+      })
+      .then((data) => setMetrics(data))
+      .catch(() => {})
   }, [])
 
   return (
@@ -147,15 +153,15 @@ export default function HomePage() {
               className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto"
             >
               <div className="text-center">
-                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals.memes ?? '—'}</div>
+                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals?.memes ?? '—'}</div>
                 <p className="text-secondary-600">Memes Generated</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals.projects ?? '—'}</div>
+                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals?.projects ?? '—'}</div>
                 <p className="text-secondary-600">Projects</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals.users ?? '—'}</div>
+                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals?.users ?? '—'}</div>
                 <p className="text-secondary-600">Users</p>
               </div>
             </motion.div>
