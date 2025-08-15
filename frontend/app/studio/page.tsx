@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader } from '../../components/ui/Card'
 import { Textarea, Input } from '../../components/ui/Input'
 import { AdsterraBanner } from '../../components/ads/AdsterraBanner'
 import { CoolLoadingIndicator } from '../../components/ui/CoolLoadingIndicator'
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 import { getUserId } from '../../lib/auth'
 
 export default function StudioPage() {
@@ -126,13 +127,17 @@ export default function StudioPage() {
         </motion.div>
         {/* Top banner ad for visibility on all devices */}
         <div className="mb-6 flex justify-center">
-          <AdsterraBanner
-            type="iframe"
-            keyId="de0016110e51c18b0e34285a15e64a70"
-            scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
-            width={300}
-            height={250}
-          />
+          <div className="border border-secondary-200 rounded-lg p-4 bg-secondary-50">
+            <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
+              <AdsterraBanner
+                type="iframe"
+                keyId="de0016110e51c18b0e34285a15e64a70"
+                scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
+                width={300}
+                height={250}
+              />
+            </ErrorBoundary>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -412,13 +417,15 @@ export default function StudioPage() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-sm font-medium text-secondary-700 mb-3">Sponsored</p>
-                <AdsterraBanner
-                  type="iframe"
-                  keyId="de0016110e51c18b0e34285a15e64a70"
-                  scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
-                  width={300}
-                  height={250}
-                />
+                <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
+                  <AdsterraBanner
+                    type="iframe"
+                    keyId="de0016110e51c18b0e34285a15e64a70"
+                    scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
+                    width={300}
+                    height={250}
+                  />
+                </ErrorBoundary>
               </CardContent>
             </Card>
           </div>
@@ -433,13 +440,15 @@ export default function StudioPage() {
         >
           <Card>
             <CardContent className="p-6 flex justify-center">
-              <AdsterraBanner
-                type="iframe"
-                keyId="de0016110e51c18b0e34285a15e64a70"
-                scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
-                width={300}
-                height={250}
-              />
+              <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
+                <AdsterraBanner
+                  type="iframe"
+                  keyId="de0016110e51c18b0e34285a15e64a70"
+                  scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
+                  width={300}
+                  height={250}
+                />
+              </ErrorBoundary>
             </CardContent>
           </Card>
         </motion.div>
@@ -460,17 +469,15 @@ export default function StudioPage() {
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <p className="text-sm font-medium text-secondary-700">Sponsored Content</p>
                   <div className="w-full h-64 bg-secondary-100 rounded-lg flex items-center justify-center">
-                    {/* Prefer one network per page. Replace AdSlot with Adsterra if you choose Adsterra. */}
-                    {/* Example 300x250 Iframe unit: */}
-                    <AdsterraBanner
-                      type="iframe"
-                      keyId="de0016110e51c18b0e34285a15e64a70"
-                      scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
-                      width={300}
-                      height={250}
-                    />
-                    {/* Or native unit container: */}
-                    {/* <AdsterraBanner type="native" containerId="container-03212cacd280051f4599929a27df3f3b" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" /> */}
+                    <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
+                      <AdsterraBanner
+                        type="iframe"
+                        keyId="de0016110e51c18b0e34285a15e64a70"
+                        scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
+                        width={300}
+                        height={250}
+                      />
+                    </ErrorBoundary>
                   </div>
                   <p className="text-xs text-secondary-500 text-center">Your meme will appear once generation is complete. Thanks for your patience!</p>
                 </div>
