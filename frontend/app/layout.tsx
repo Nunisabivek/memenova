@@ -14,6 +14,7 @@ export const metadata = {
     description: 'Create viral memes with AI. Transform your ideas into engaging content.',
     type: 'website',
     siteName: 'MemeNova',
+    url: 'https://memenova-frontend.vercel.app/',
   },
   twitter: {
     card: 'summary_large_image',

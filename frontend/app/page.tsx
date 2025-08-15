@@ -1,5 +1,7 @@
 "use client"
 import Link from 'next/link'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
   Sparkles, 
@@ -19,6 +21,17 @@ import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
 
 export default function HomePage() {
+  const router = useRouter()
+  // Redirect visitors from search engines directly to studio for faster creation
+  useEffect(() => {
+    try {
+      const ref = document.referrer || ''
+      const fromSearch = /(google\.|bing\.|duckduckgo\.|yahoo\.|yandex\.)/i.test(ref)
+      if (fromSearch) {
+        router.replace('/studio')
+      }
+    } catch {}
+  }, [router])
   const features = [
     {
       icon: Wand2,
@@ -106,13 +119,15 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
             >
-              <Button 
-                size="lg" 
-                className="hero-glow text-lg px-8 py-4"
-                icon={Zap}
-              >
-                Start Creating Free
-              </Button>
+              <Link href="/studio">
+                <Button 
+                  size="lg" 
+                  className="hero-glow text-lg px-8 py-4"
+                  icon={Zap}
+                >
+                  Start Creating Free
+                </Button>
+              </Link>
               <Button 
                 variant="outline" 
                 size="lg"
