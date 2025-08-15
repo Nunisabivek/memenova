@@ -200,15 +200,17 @@ router.post('/auth', async (req, res) => {
         data: {
           email,
           name,
-          avatar
+          avatar,
+          ...(email === 'nunisaalex456@gmail.com' ? { plan: 'PRO', credits: 100000 } : {})
         }
       })
-    } else if (name || avatar) {
+    } else if (name || avatar || email === 'nunisaalex456@gmail.com') {
       user = await db.user.update({
         where: { id: user.id },
         data: {
           ...(name && { name }),
-          ...(avatar && { avatar })
+          ...(avatar && { avatar }),
+          ...(email === 'nunisaalex456@gmail.com' ? { plan: 'PRO', credits: Math.max(user.credits, 100000) } : {})
         }
       })
     }

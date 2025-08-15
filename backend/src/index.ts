@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 import { db } from './config/database'
 import { MemeGeneratorService } from './services/meme-generator'
 import { generateMemeContent, generateMemeImage } from './services/ai/openai'
-import { fetchTopTemplates, composeTemplateMeme } from './services/meme-template'
+import { fetchTopTemplates, composeTemplateMeme, composeMemeOnImage } from './services/meme-template'
 import { generateMemeContentWithGemini } from './services/ai/gemini'
 import usersRouter from './routes/users'
 import memesRouter from './routes/memes'
@@ -186,6 +186,15 @@ app.post('/generate', async (req, res) => {
             await sleep(randomDelayMs())
             return res.json({ ok: true, previewUrl })
           }
+          // If user uploaded an image, compose meme text onto it
+          if (finalImageUrl) {
+            try {
+              renderedBuffer = await composeMemeOnImage({ imageUrl: finalImageUrl, text: memeContent?.text })
+            } catch (e) {
+              logger.warn({ err: e }, 'composeMemeOnImage failed, falling back to URL')
+            }
+          }
+
           if (!finalImageUrl && process.env.OPENAI_API_KEY) {
             try {
               finalImageUrl = await generateMemeImage(memeContent.imagePrompt, memeContent.text)
