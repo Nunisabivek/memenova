@@ -18,9 +18,9 @@ import {
 import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader } from '../../components/ui/Card'
 import { Textarea, Input } from '../../components/ui/Input'
-import { AdSlot } from '../../components/AdSlot'
 import { AdsterraBanner } from '../../components/ads/AdsterraBanner'
 import { CoolLoadingIndicator } from '../../components/ui/CoolLoadingIndicator'
+import { getUserId } from '../../lib/auth'
 
 export default function StudioPage() {
   const [prompt, setPrompt] = useState('When the sprint ends but the bugs start')
@@ -64,14 +64,22 @@ export default function StudioPage() {
           return
         }
         // Simulate a low-res 720p result preview info
-        const { data } = await axios.post(baseUrl ? `${baseUrl}/generate` : '/api/generate', { type: 'image', prompt: `${prompt} (video 720p preview frame)`, humor, imageUrl })
+        const { data } = await axios.post(
+          baseUrl ? `${baseUrl}/generate` : '/api/generate',
+          { type: 'image', prompt: `${prompt} (video 720p preview frame)`, humor, imageUrl },
+          { headers: { 'x-user-id': getUserId() || '' } }
+        )
         setImageUrl(data.previewUrl)
         const next = videoCount + 1
         setVideoCount(next)
         if (typeof window !== 'undefined') localStorage.setItem('freeVideoCount', String(next))
       } else {
-      const { data } = await axios.post(baseUrl ? `${baseUrl}/generate` : '/api/generate', { type: 'image', prompt, humor, imageUrl })
-      setImageUrl(data.previewUrl)
+        const { data } = await axios.post(
+          baseUrl ? `${baseUrl}/generate` : '/api/generate',
+          { type: 'image', prompt, humor, imageUrl },
+          { headers: { 'x-user-id': getUserId() || '' } }
+        )
+        setImageUrl(data.previewUrl)
       }
     } finally {
       setLoading(false)
@@ -394,7 +402,13 @@ export default function StudioPage() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-sm font-medium text-secondary-700 mb-3">Sponsored</p>
-            <AdSlot adFormat="auto" adLayout="in-article" style={{ display: 'block' }} />
+                <AdsterraBanner
+                  type="iframe"
+                  keyId="de0016110e51c18b0e34285a15e64a70"
+                  scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
+                  width={300}
+                  height={250}
+                />
               </CardContent>
             </Card>
           </div>
@@ -408,8 +422,14 @@ export default function StudioPage() {
           className="mt-12"
         >
           <Card>
-            <CardContent className="p-6">
-              <AdSlot adFormat="auto" style={{ display: 'block' }} />
+            <CardContent className="p-6 flex justify-center">
+              <AdsterraBanner
+                type="iframe"
+                keyId="de0016110e51c18b0e34285a15e64a70"
+                scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
+                width={300}
+                height={250}
+              />
             </CardContent>
           </Card>
         </motion.div>
