@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import axios from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -35,6 +35,7 @@ export default function StudioPage() {
   const [file, setFile] = useState<File | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const humorStyles = [
     { value: 'sarcastic', label: 'Sarcastic', emoji: '😏', description: 'Witty and ironic' },
@@ -123,6 +124,16 @@ export default function StudioPage() {
             Transform your ideas into viral memes with our AI-powered creation tools
           </p>
         </motion.div>
+        {/* Top banner ad for visibility on all devices */}
+        <div className="mb-6 flex justify-center">
+          <AdsterraBanner
+            type="iframe"
+            keyId="de0016110e51c18b0e34285a15e64a70"
+            scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
+            width={300}
+            height={250}
+          />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Creation Area */}
@@ -142,7 +153,7 @@ export default function StudioPage() {
                     >Video</button>
                   </div>
                   <div className="text-xs text-secondary-600">
-                    {type==='video' ? `Free: ${Math.max(0, 3 - videoCount)} of 3 left · Output: 720p preview` : 'Unlimited free image memes (with ads)'}
+                    {type==='video' ? `Free: ${Math.max(0, 3 - videoCount)} of 3 left · Output: 720p preview` : 'Unlimited free image memes'}
                   </div>
                 </CardContent>
               </Card>
@@ -222,17 +233,16 @@ export default function StudioPage() {
                           <p className="text-sm text-secondary-600">or click to browse</p>
           </div>
                         <input
+                          ref={fileInputRef}
                           type="file"
                           accept="image/*"
                           onChange={(e) => setFile(e.target.files?.[0] || null)}
                           className="hidden"
                           id="file-upload"
                         />
-                        <label htmlFor="file-upload">
-                          <Button variant="outline" size="sm" className="cursor-pointer">
-                            Choose File
-                          </Button>
-                        </label>
+                        <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                          Choose File
+                        </Button>
             </div>
           )}
         </div>
