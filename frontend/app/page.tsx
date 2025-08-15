@@ -71,11 +71,7 @@ export default function HomePage() {
     }
   ]
 
-  const stats = [
-    { label: 'Memes Created', value: '50K+', icon: Image },
-    { label: 'Happy Users', value: '5K+', icon: Users },
-    { label: 'Avg. Rating', value: '4.9', icon: Star },
-  ]
+  // Removed mock stats; keep hero simple without fabricated numbers
 
   return (
     <>
@@ -138,29 +134,7 @@ export default function HomePage() {
               </Button>
             </motion.div>
 
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto"
-            >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                  className="text-center"
-                >
-                  <div className="flex items-center justify-center mb-2">
-                    <stat.icon className="w-5 h-5 text-primary-600 mr-2" />
-                    <span className="text-3xl font-bold text-secondary-900">{stat.value}</span>
-                  </div>
-                  <p className="text-secondary-600">{stat.label}</p>
-                </motion.div>
-              ))}
-            </motion.div>
+            {/* No mock stats displayed */}
           </div>
         </div>
       </section>
