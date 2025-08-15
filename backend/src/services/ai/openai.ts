@@ -88,14 +88,15 @@ Return JSON with: text, imagePrompt, suggestions (array of 3 alternatives)`
   }
 }
 
-export async function generateMemeImage(prompt: string): Promise<string> {
+export async function generateMemeImage(prompt: string, memeText: string): Promise<string> {
   if (!openai) {
     throw new Error('OpenAI is not configured (missing OPENAI_API_KEY)')
   }
   try {
+    const fullPrompt = `A high-quality, funny meme image based on the following description: "${prompt}". The image should prominently feature the text "${memeText}" written in a classic, bold, white meme font (like Impact) with a black outline, making it clear and readable. The style should be modern, vibrant, and ready for social media.`
     const response = await openai.images.generate({
       model: 'dall-e-3',
-      prompt: `Create a meme-style image: ${prompt}. Make it visually engaging, clear, and suitable for adding text overlay. Style: modern internet meme aesthetic.`,
+      prompt: fullPrompt,
       size: '1024x1024',
       quality: 'standard',
       n: 1,

@@ -163,11 +163,12 @@ app.post('/generate', async (req, res) => {
         
         // Generate image if OpenAI is available and no image provided
         let finalImageUrl = imageUrl
-        if (!finalImageUrl && process.env.OPENAI_API_KEY && provider === 'OPENAI') {
+        if (!finalImageUrl && process.env.OPENAI_API_KEY) {
           try {
-            finalImageUrl = await generateMemeImage(memeContent.imagePrompt)
+            // Pass both image prompt and text to get text overlay
+            finalImageUrl = await generateMemeImage(memeContent.imagePrompt, memeContent.text)
           } catch (error) {
-            logger.warn('Image generation failed, using placeholder', error)
+            logger.warn('Image generation with DALL-E failed, using placeholder', error)
             finalImageUrl = `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent(memeContent.text)}`
           }
         } else if (!finalImageUrl) {
