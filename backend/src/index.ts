@@ -14,6 +14,7 @@ import { generateMemeContent, generateMemeImage } from './services/ai/openai'
 import { generateMemeContentWithGemini } from './services/ai/gemini'
 import usersRouter from './routes/users'
 import memesRouter from './routes/memes'
+import newsRouter from './routes/news'
 
 const app = express()
 const logger = pino({ level: process.env.LOG_LEVEL || 'info' })
@@ -36,6 +37,7 @@ app.use((req: any, _res, next) => {
 // Mount API routers (require x-user-id if you want persistence)
 app.use('/api/users', usersRouter)
 app.use('/api/memes', memesRouter)
+app.use('/api/news', newsRouter)
 
 const redisUrl = process.env.REDIS_URL
 const renderQueue = redisUrl ? new Queue('render-jobs', { connection: new IORedis(redisUrl) }) : null
@@ -112,7 +114,7 @@ const memeService = new MemeGeneratorService()
 
 app.post('/generate', async (req, res) => {
   try {
-    let { projectId, type, prompt, humor, imageUrl, provider = 'OPENAI', slangLevel = 'light', userId, ownerId } = req.body
+    let { projectId, type, prompt, humor, imageUrl, provider = 'GEMINI', slangLevel = 'light', userId, ownerId } = req.body
     // Prefer explicit userId, fallback to ownerId, else anonymous
     userId = userId || ownerId || 'anonymous'
     

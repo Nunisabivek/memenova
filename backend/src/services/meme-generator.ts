@@ -52,8 +52,8 @@ export class MemeGeneratorService {
         }
       }
       
-      // Generate meme content using selected AI provider
-      const provider = request.provider || Prisma.Provider.OPENAI
+      // Generate meme content using selected AI provider (default to GEMINI for witty text)
+      const provider = request.provider || Prisma.Provider.GEMINI
       let memeContent
       
       if (provider === Prisma.Provider.GEMINI) {
