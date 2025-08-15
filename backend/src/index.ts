@@ -245,8 +245,32 @@ app.post('/generate', async (req, res) => {
         
         await sleep(randomDelayMs())
         if (renderedBuffer) {
-          res.setHeader('Content-Type', 'image/jpeg')
-          return res.end(renderedBuffer)
+          try {
+            // Persist composed image and return a URL so frontend can render it easily
+            const composedKey = `generated/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+            if (supabase) {
+              const { error } = await supabase
+                .storage
+                .from(SUPABASE_BUCKET)
+                .upload(composedKey, renderedBuffer, { contentType: 'image/jpeg', upsert: false })
+              if (!error) {
+                const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(composedKey)
+                return res.json({ ok: true, previewUrl: data.publicUrl, text: memeContent?.text, suggestions: memeContent?.suggestions })
+              }
+            }
+            // Local fallback
+            const uploadsDir = path.join(process.cwd(), 'uploads')
+            try { await fs.mkdir(uploadsDir, { recursive: true }) } catch {}
+            const filePath = path.join(uploadsDir, path.basename(composedKey))
+            await fs.writeFile(filePath, renderedBuffer)
+            const baseUrl = `${req.protocol}://${req.get('host')}`
+            const url = `${baseUrl}/uploads/${path.basename(composedKey)}`
+            return res.json({ ok: true, previewUrl: url, text: memeContent?.text, suggestions: memeContent?.suggestions })
+          } catch (persistErr) {
+            logger.warn({ err: persistErr }, 'Failed to persist composed image, streaming as fallback')
+            res.setHeader('Content-Type', 'image/jpeg')
+            return res.end(renderedBuffer)
+          }
         }
         return res.json({ ok: true, previewUrl: finalImageUrl, text: memeContent?.text, suggestions: memeContent?.suggestions })
         
