@@ -5,11 +5,15 @@ import pino from 'pino'
 import { Queue } from 'bullmq'
 import IORedis from 'ioredis'
 import multer from 'multer'
+import { promises as fs } from 'fs'
+import path from 'path'
 import { createClient } from '@supabase/supabase-js'
 import { db } from './config/database'
 import { MemeGeneratorService } from './services/meme-generator'
 import { generateMemeContent, generateMemeImage } from './services/ai/openai'
 import { generateMemeContentWithGemini } from './services/ai/gemini'
+import usersRouter from './routes/users'
+import memesRouter from './routes/memes'
 
 const app = express()
 const logger = pino({ level: process.env.LOG_LEVEL || 'info' })
@@ -17,6 +21,21 @@ const logger = pino({ level: process.env.LOG_LEVEL || 'info' })
 app.use(cors())
 app.use(express.json({ limit: '2mb' }))
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
+// Serve local uploads if Supabase isn't configured
+app.use('/uploads', express.static('uploads'))
+
+// Very simple auth shim: accept x-user-id header for demo purposes
+app.use((req: any, _res, next) => {
+  const headerUserId = req.header('x-user-id')
+  if (headerUserId) {
+    req.user = { id: headerUserId }
+  }
+  next()
+})
+
+// Mount API routers (require x-user-id if you want persistence)
+app.use('/api/users', usersRouter)
+app.use('/api/memes', memesRouter)
 
 const redisUrl = process.env.REDIS_URL
 const renderQueue = redisUrl ? new Queue('render-jobs', { connection: new IORedis(redisUrl) }) : null
@@ -47,22 +66,30 @@ const supabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE
 
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
-    if (!supabase) return res.status(500).json({ error: 'Supabase not configured' })
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
-
     const ext = (req.file.originalname.split('.').pop() || 'bin').toLowerCase()
     const key = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-    const { error } = await supabase
-      .storage
-      .from(SUPABASE_BUCKET)
-      .upload(key, req.file.buffer, { contentType: req.file.mimetype, upsert: false })
+    if (supabase) {
+      const { error } = await supabase
+        .storage
+        .from(SUPABASE_BUCKET)
+        .upload(key, req.file.buffer, { contentType: req.file.mimetype, upsert: false })
 
-    if (error) return res.status(500).json({ error: error.message })
+      if (error) return res.status(500).json({ error: error.message })
 
-    // If bucket public, we can form public URL
-    const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(key)
-    return res.json({ key, url: data.publicUrl })
+      const { data } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(key)
+      return res.json({ key, url: data.publicUrl })
+    }
+
+    // Local fallback: save to ./uploads and serve via /uploads
+    const uploadsDir = path.join(process.cwd(), 'uploads')
+    try { await fs.mkdir(uploadsDir, { recursive: true }) } catch {}
+    const filePath = path.join(uploadsDir, path.basename(key))
+    await fs.writeFile(filePath, req.file.buffer)
+    const baseUrl = `${req.protocol}://${req.get('host')}`
+    const url = `${baseUrl}/uploads/${path.basename(key)}`
+    return res.json({ key, url })
   } catch (e: any) {
     return res.status(500).json({ error: e.message })
   }
@@ -85,8 +112,9 @@ const memeService = new MemeGeneratorService()
 
 app.post('/generate', async (req, res) => {
   try {
-    const { projectId, type, prompt, humor, imageUrl, provider = 'OPENAI' } = req.body
-    const userId = 'anonymous' // In production, get from JWT token
+    let { projectId, type, prompt, humor, imageUrl, provider = 'OPENAI', slangLevel = 'light', userId, ownerId } = req.body
+    // Prefer explicit userId, fallback to ownerId, else anonymous
+    userId = userId || ownerId || 'anonymous'
     
     if (!prompt || !humor) {
       return res.status(400).json({ error: 'Prompt and humor are required' })
@@ -101,12 +129,14 @@ app.post('/generate', async (req, res) => {
             prompt,
             humor,
             imageUrl,
+            slangLevel,
           })
         } else if (process.env.OPENAI_API_KEY) {
           memeContent = await generateMemeContent({
             prompt,
             humor,
             imageUrl,
+            slangLevel,
           })
         } else {
           // Fallback to placeholder
@@ -142,6 +172,14 @@ app.post('/generate', async (req, res) => {
           finalImageUrl = `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent(memeContent.text)}`
         }
         
+        // Auto-create project for signed-in users if not provided
+        if (!projectId && db && userId && userId !== 'anonymous') {
+          const project = await db.project.create({
+            data: { ownerId: userId, type: 'IMAGE' as any, prompt, humor, settings: {}, status: 'GENERATING' as any }
+          })
+          projectId = project.id
+        }
+
         // Save generation record
         if (projectId && db) {
           await db.generation.create({
@@ -161,6 +199,12 @@ app.post('/generate', async (req, res) => {
               duration: Date.now() - Date.now(), // Will be updated with actual duration
               success: true
             }
+          })
+
+          // Update project with results
+          await db.project.update({
+            where: { id: projectId },
+            data: { resultUrl: finalImageUrl, status: 'COMPLETED' as any }
           })
         }
         

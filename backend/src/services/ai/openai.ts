@@ -1,15 +1,19 @@
 import OpenAI from 'openai'
 import { env } from '../../config/env'
 
-export const openai = new OpenAI({
-  apiKey: env.OPENAI_API_KEY,
-})
+// Lazily/conditionally initialize the OpenAI client so startup doesn't crash
+// when OPENAI_API_KEY is not configured.
+const openaiApiKey = process.env.OPENAI_API_KEY || env.OPENAI_API_KEY
+export const openai: OpenAI | null = openaiApiKey
+  ? new OpenAI({ apiKey: openaiApiKey })
+  : null
 
 export interface MemeGenerationRequest {
   prompt: string
   humor: string
   imageUrl?: string
   style?: string
+  slangLevel?: 'none' | 'light' | 'medium'
 }
 
 export interface MemeGenerationResponse {
@@ -21,6 +25,9 @@ export interface MemeGenerationResponse {
 }
 
 export async function generateMemeContent(request: MemeGenerationRequest): Promise<MemeGenerationResponse> {
+  if (!openai) {
+    throw new Error('OpenAI is not configured (missing OPENAI_API_KEY)')
+  }
   const systemPrompt = `You are a viral meme creator AI. Your job is to create hilarious, engaging meme content that resonates with internet culture.
 
 Humor Style: ${request.humor}
@@ -29,6 +36,11 @@ Humor Style: ${request.humor}
 - wholesome: Feel-good, positive vibes
 - savage: Bold, edgy, and provocative
 - relatable: Everyday struggles and situations
+
+Tone & Slang:
+- Use ${request.slangLevel || 'light'} internet slang. Keep it witty and current without being vulgar.
+- Avoid slurs, hate speech, sexual content, extreme profanity, targeted harassment, or illegal references.
+- Keep it PG-13, playful, and inclusive.
 
 Generate meme content that includes:
 1. Main meme text (short, punchy, memorable)
@@ -77,6 +89,9 @@ Return JSON with: text, imagePrompt, suggestions (array of 3 alternatives)`
 }
 
 export async function generateMemeImage(prompt: string): Promise<string> {
+  if (!openai) {
+    throw new Error('OpenAI is not configured (missing OPENAI_API_KEY)')
+  }
   try {
     const response = await openai.images.generate({
       model: 'dall-e-3',

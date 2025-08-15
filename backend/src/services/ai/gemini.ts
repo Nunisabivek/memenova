@@ -2,9 +2,14 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { env } from '../../config/env'
 import { MemeGenerationRequest, MemeGenerationResponse } from './openai'
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
+// Conditionally initialize Gemini to avoid startup crashes when key is missing
+const geminiApiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY
+const genAI = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null
 
 export async function generateMemeContentWithGemini(request: MemeGenerationRequest): Promise<MemeGenerationResponse> {
+  if (!genAI) {
+    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)')
+  }
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
   const systemPrompt = `You are a viral meme creator AI. Your job is to create hilarious, engaging meme content that resonates with internet culture.
@@ -20,6 +25,11 @@ Generate meme content that includes:
 1. Main meme text (short, punchy, memorable)
 2. Image generation prompt (describe the visual scene)
 3. Three alternative suggestions
+
+Tone & Slang:
+- Use ${request.slangLevel || 'light'} internet slang. Keep it witty and current without being vulgar.
+- Avoid slurs, hate speech, sexual content, extreme profanity, targeted harassment, or illegal references.
+- Keep it PG-13, playful, and inclusive.
 
 Keep it appropriate but engaging. Make it shareable and viral-worthy.
 
@@ -59,6 +69,9 @@ ${request.imageUrl ? `Base it on this image context: ${request.imageUrl}` : ''}`
 }
 
 export async function analyzeImageWithGemini(imageUrl: string): Promise<string> {
+  if (!genAI) {
+    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)')
+  }
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
   try {

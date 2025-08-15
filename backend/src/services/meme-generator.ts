@@ -1,6 +1,7 @@
 import { db } from '../config/database'
 import { generateMemeContent, generateMemeImage } from './ai/openai'
 import { generateMemeContentWithGemini } from './ai/gemini'
+import { moderateArray, moderateText } from './moderation'
 import pkg from '@prisma/client'
 const { Prisma } = pkg
 type Provider = typeof Prisma.Provider[keyof typeof Prisma.Provider]
@@ -12,6 +13,7 @@ export interface GenerateMemeRequest {
   imageUrl?: string
   provider?: Provider
   projectId?: string
+  slangLevel?: 'none' | 'light' | 'medium'
 }
 
 export interface GenerateMemeResponse {
@@ -28,15 +30,22 @@ export class MemeGeneratorService {
     const startTime = Date.now()
     
     try {
-      // Create or update project (if database available)
-      let project = null
-      if (db) {
+      // Determine if we can persist: db present and user exists
+      let canPersist = false
+      if (db && request.userId) {
+        const existingUser = await db.user.findUnique({ where: { id: request.userId } })
+        canPersist = !!existingUser
+      }
+
+      // Create or update project (only if canPersist)
+      let project = null as any
+      if (canPersist) {
         project = await this.createOrUpdateProject(request)
       } else {
-        // Mock project for database-less mode
+        // Mock project for anonymous or non-existing user
         project = {
           id: `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          ownerId: request.userId,
+          ownerId: request.userId || 'anonymous',
           prompt: request.prompt,
           humor: request.humor,
           status: 'GENERATING'
@@ -52,12 +61,14 @@ export class MemeGeneratorService {
           prompt: request.prompt,
           humor: request.humor,
           imageUrl: request.imageUrl,
+          slangLevel: request.slangLevel,
         })
       } else {
         memeContent = await generateMemeContent({
           prompt: request.prompt,
           humor: request.humor,
           imageUrl: request.imageUrl,
+          slangLevel: request.slangLevel,
         })
       }
       
@@ -67,10 +78,14 @@ export class MemeGeneratorService {
         imageUrl = await generateMemeImage(memeContent.imagePrompt)
       }
       
+      // Soft moderation pass to keep content PG-13
+      const moderatedMain = moderateText(memeContent.text)
+      const moderatedSuggestions = moderateArray(memeContent.suggestions || [])
+
       const duration = Date.now() - startTime
       
-      // Save generation record (if database available)
-      if (db) {
+      // Save generation record (only if we can persist)
+      if (canPersist) {
         await db.generation.create({
           data: {
             projectId: project.id,
@@ -82,10 +97,17 @@ export class MemeGeneratorService {
               imageUrl: request.imageUrl,
             },
             output: {
-              text: memeContent.text,
+              text: moderatedMain.text,
               imagePrompt: memeContent.imagePrompt,
-              suggestions: memeContent.suggestions,
+              suggestions: moderatedSuggestions.items,
               imageUrl,
+              moderation: {
+                flagged: moderatedMain.flagged || moderatedSuggestions.anyFlagged,
+                reasons: [
+                  ...(moderatedMain.flagged ? moderatedMain.reasons : []),
+                  ...(moderatedSuggestions.anyFlagged ? moderatedSuggestions.reasons : []),
+                ],
+              },
             },
             tokens: memeContent.tokens,
             cost: memeContent.cost,
@@ -115,17 +137,17 @@ export class MemeGeneratorService {
       
       return {
         id: project.id,
-        text: memeContent.text,
+        text: moderatedMain.text,
         imageUrl,
         imagePrompt: memeContent.imagePrompt,
-        suggestions: memeContent.suggestions,
+        suggestions: moderatedSuggestions.items,
         projectId: project.id,
       }
       
     } catch (error) {
       console.error('Meme generation error:', error)
       
-      // Save failed generation (if database available)
+      // Save failed generation (only if we can persist and have a project id)
       if (db && request.projectId) {
         await db.generation.create({
           data: {
