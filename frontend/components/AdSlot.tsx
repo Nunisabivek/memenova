@@ -1,11 +1,12 @@
 "use client"
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 type Props = {
   adSlot?: string
   adFormat?: string
   adLayout?: string
-  style?: React.CSSProperties
+  style?: CSSProperties
 }
 
 export function AdSlot({ adSlot, adFormat = 'auto', adLayout, style }: Props) {
@@ -16,18 +17,19 @@ export function AdSlot({ adSlot, adFormat = 'auto', adLayout, style }: Props) {
   useEffect(() => {
     // Detect basic adblock by attempting to load adsbygoogle and checking DOM
     const check = () => {
-      const present = !!document.querySelector('ins.adsbygoogle')
-      const hidden = present && (ref.current && getComputedStyle(ref.current).display === 'none')
-      setAdBlocked(Boolean(client) && present && hidden)
+      const present: boolean = !!document.querySelector('ins.adsbygoogle')
+      const node = ref.current
+      const hidden: boolean = present && !!node && getComputedStyle(node).display === 'none'
+      setAdBlocked(!!client && present && hidden)
     }
     try {
       // @ts-ignore
       ;(window.adsbygoogle = window.adsbygoogle || []).push({})
       setTimeout(check, 800)
     } catch {
-      setAdBlocked(Boolean(client))
+      setAdBlocked(!!client)
     }
-  }, [])
+  }, [client])
 
   if (!client) return null
 
