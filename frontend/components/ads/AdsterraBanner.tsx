@@ -43,9 +43,6 @@ export function AdsterraBanner(props: AdsterraBannerProps) {
 		const container = mountRef.current || document.body
 
 		if (props.type === 'iframe') {
-			const scriptKey = `iframe-${props.keyId}`
-			if (window.adsterraLoaded.has(scriptKey)) return
-
 			// Configure global before loading script
 			window.atOptions = {
 				key: props.keyId,
@@ -61,7 +58,6 @@ export function AdsterraBanner(props: AdsterraBannerProps) {
 			s.async = true
 			s.onerror = () => console.warn('Failed to load Adsterra script')
 			container.appendChild(s)
-			window.adsterraLoaded.add(scriptKey)
 			return
 		}
 

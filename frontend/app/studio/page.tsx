@@ -419,11 +419,9 @@ export default function StudioPage() {
                 <p className="text-sm font-medium text-secondary-700 mb-3">Sponsored</p>
                 <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
                   <AdsterraBanner
-                    type="iframe"
-                    keyId="de0016110e51c18b0e34285a15e64a70"
-                    scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
-                    width={300}
-                    height={250}
+                    type="native"
+                    containerId="container-right-300x250"
+                    scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js"
                   />
                 </ErrorBoundary>
               </CardContent>
@@ -442,11 +440,9 @@ export default function StudioPage() {
             <CardContent className="p-6 flex justify-center">
               <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
                 <AdsterraBanner
-                  type="iframe"
-                  keyId="de0016110e51c18b0e34285a15e64a70"
-                  scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
-                  width={300}
-                  height={250}
+                  type="native"
+                  containerId="container-bottom-300x250"
+                  scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js"
                 />
               </ErrorBoundary>
             </CardContent>
