@@ -24,7 +24,7 @@ import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 import { getUserId } from '../../lib/auth'
 
 export default function StudioPage() {
-  const [prompt, setPrompt] = useState('When the sprint ends but the bugs start')
+  const [prompt, setPrompt] = useState('')
   const [humor, setHumor] = useState('sarcastic')
   const [loading, setLoading] = useState(false)
   const [showAdOverlay, setShowAdOverlay] = useState(false)
