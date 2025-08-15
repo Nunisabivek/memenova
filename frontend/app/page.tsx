@@ -88,6 +88,33 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Fixed vertical sidebars for desktop */}
+      <div className="hidden lg:block fixed inset-y-24 left-4 z-40">
+        <div className="space-y-4">
+          <ErrorBoundary fallback={<div className="w-[160px] h-[600px] flex items-center justify-center text-secondary-500">Ad</div>}>
+            <AdsterraBanner type="native" containerId="home-left-1" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+          </ErrorBoundary>
+          <ErrorBoundary fallback={<div className="w-[160px] h-[600px] flex items-center justify-center text-secondary-500">Ad</div>}>
+            <AdsterraBanner type="native" containerId="home-left-2" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+          </ErrorBoundary>
+          <ErrorBoundary fallback={<div className="w-[160px] h-[600px] flex items-center justify-center text-secondary-500">Ad</div>}>
+            <AdsterraBanner type="native" containerId="home-left-3" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+          </ErrorBoundary>
+        </div>
+      </div>
+      <div className="hidden lg:block fixed inset-y-24 right-4 z-40">
+        <div className="space-y-4">
+          <ErrorBoundary fallback={<div className="w-[160px] h-[600px] flex items-center justify-center text-secondary-500">Ad</div>}>
+            <AdsterraBanner type="native" containerId="home-right-1" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+          </ErrorBoundary>
+          <ErrorBoundary fallback={<div className="w-[160px] h-[600px] flex items-center justify-center text-secondary-500">Ad</div>}>
+            <AdsterraBanner type="native" containerId="home-right-2" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+          </ErrorBoundary>
+          <ErrorBoundary fallback={<div className="w-[160px] h-[600px] flex items-center justify-center text-secondary-500">Ad</div>}>
+            <AdsterraBanner type="native" containerId="home-right-3" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+          </ErrorBoundary>
+        </div>
+      </div>
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         {/* Background Elements */}

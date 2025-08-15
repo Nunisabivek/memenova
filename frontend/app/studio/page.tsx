@@ -389,6 +389,19 @@ export default function StudioPage() {
               </Card>
             </motion.div>
 
+            {/* Ads directly under upgrade card */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <p className="text-sm font-medium text-secondary-700">Sponsored</p>
+                <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
+                  <AdsterraBanner type="native" containerId="sidebar-under-upgrade-1" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+                </ErrorBoundary>
+                <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
+                  <AdsterraBanner type="native" containerId="sidebar-under-upgrade-2" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+                </ErrorBoundary>
+              </CardContent>
+            </Card>
+
             {/* Tips */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
