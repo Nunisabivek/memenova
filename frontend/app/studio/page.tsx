@@ -143,6 +143,15 @@ export default function StudioPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Creation Area */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Inline ad row inside studio main area */}
+            <div className="flex flex-wrap gap-4 justify-center">
+              <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
+                <AdsterraBanner type="native" containerId="studio-inline-1" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+              </ErrorBoundary>
+              <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
+                <AdsterraBanner type="native" containerId="studio-inline-2" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+              </ErrorBoundary>
+            </div>
             {/* Type Selector */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card>
@@ -448,6 +457,15 @@ export default function StudioPage() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Sticky mobile bottom ad in studio */}
+        <div className="fixed bottom-2 left-0 right-0 mx-auto w-full max-w-md px-4 sm:hidden z-40">
+          <div className="rounded-md border border-secondary-200 bg-white/90 backdrop-blur p-2 shadow-lg flex justify-center">
+            <ErrorBoundary fallback={<div className="w-[320px] h-[50px] flex items-center justify-center text-secondary-500">Ad</div>}>
+              <AdsterraBanner type="native" containerId="studio-mobile-sticky" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+            </ErrorBoundary>
+          </div>
+        </div>
         
         {/* Ad Overlay shown during generation */}
         <AnimatePresence>

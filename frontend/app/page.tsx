@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
+import { AdsterraBanner } from '../components/ads/AdsterraBanner'
+import { ErrorBoundary } from '../components/ui/ErrorBoundary'
 
 export default function HomePage() {
   const router = useRouter()
@@ -165,6 +167,16 @@ export default function HomePage() {
                 <p className="text-secondary-600">Users</p>
               </div>
             </motion.div>
+
+            {/* Inline ads below metrics */}
+            <div className="mt-10 flex flex-wrap gap-4 justify-center">
+              <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
+                <AdsterraBanner type="native" containerId="home-top-1" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+              </ErrorBoundary>
+              <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
+                <AdsterraBanner type="native" containerId="home-top-2" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+              </ErrorBoundary>
+            </div>
           </div>
         </div>
       </section>
