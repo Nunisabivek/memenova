@@ -19,6 +19,7 @@ import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader } from '../../components/ui/Card'
 import { Textarea, Input } from '../../components/ui/Input'
 import { AdSlot } from '../../components/AdSlot'
+import { AdsterraBanner } from '../../components/ads/AdsterraBanner'
 import { CoolLoadingIndicator } from '../../components/ui/CoolLoadingIndicator'
 
 export default function StudioPage() {
@@ -429,7 +430,17 @@ export default function StudioPage() {
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <p className="text-sm font-medium text-secondary-700">Sponsored Content</p>
                   <div className="w-full h-64 bg-secondary-100 rounded-lg flex items-center justify-center">
-                    <AdSlot adFormat="auto" style={{ display: 'block', width: '100%', height: '100%' }} />
+                    {/* Prefer one network per page. Replace AdSlot with Adsterra if you choose Adsterra. */}
+                    {/* Example 300x250 Iframe unit: */}
+                    <AdsterraBanner
+                      type="iframe"
+                      keyId="de0016110e51c18b0e34285a15e64a70"
+                      scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
+                      width={300}
+                      height={250}
+                    />
+                    {/* Or native unit container: */}
+                    {/* <AdsterraBanner type="native" containerId="container-03212cacd280051f4599929a27df3f3b" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" /> */}
                   </div>
                   <p className="text-xs text-secondary-500 text-center">Your meme will appear once generation is complete. Thanks for your patience!</p>
                 </div>
