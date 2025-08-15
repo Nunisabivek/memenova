@@ -27,6 +27,7 @@ declare global {
 
 export function AdsterraBanner(props: AdsterraBannerProps) {
 	const initialized = useRef(false)
+	const mountRef = useRef<HTMLDivElement | null>(null)
 
 	useEffect(() => {
 		if (initialized.current) return
@@ -38,6 +39,8 @@ export function AdsterraBanner(props: AdsterraBannerProps) {
 		if (!window.adsterraLoaded) {
 			window.adsterraLoaded = new Set()
 		}
+
+		const container = mountRef.current || document.body
 
 		if (props.type === 'iframe') {
 			const scriptKey = `iframe-${props.keyId}`
@@ -57,7 +60,7 @@ export function AdsterraBanner(props: AdsterraBannerProps) {
 			s.src = props.scriptSrc.startsWith('http') ? props.scriptSrc : `https:${props.scriptSrc}`
 			s.async = true
 			s.onerror = () => console.warn('Failed to load Adsterra script')
-			document.body.appendChild(s)
+			container.appendChild(s)
 			window.adsterraLoaded.add(scriptKey)
 			return
 		}
@@ -72,16 +75,20 @@ export function AdsterraBanner(props: AdsterraBannerProps) {
 		s.setAttribute('data-cfasync', 'false')
 		s.src = props.scriptSrc.startsWith('http') ? props.scriptSrc : `https:${props.scriptSrc}`
 		s.onerror = () => console.warn('Failed to load Adsterra script')
-		document.body.appendChild(s)
+		container.appendChild(s)
 		window.adsterraLoaded.add(scriptKey)
 	}, [props])
 
 	if (props.type === 'native') {
-		return <div id={props.containerId} style={{ width: '100%' }} />
+		return (
+			<div ref={mountRef} style={{ width: '100%' }}>
+				<div id={props.containerId} style={{ width: '100%' }} />
+			</div>
+		)
 	}
 
-	// For iframe units, nothing to render; the script injects the iframe
-	return <div style={{ width: props.width, height: props.height }} />
+	// For iframe units, provide a mount container so the script injects inside the box
+	return <div ref={mountRef} style={{ width: props.width, height: props.height }} />
 }
 
 

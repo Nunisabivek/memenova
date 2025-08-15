@@ -471,11 +471,9 @@ export default function StudioPage() {
                   <div className="w-full h-64 bg-secondary-100 rounded-lg flex items-center justify-center">
                     <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
                       <AdsterraBanner
-                        type="iframe"
-                        keyId="de0016110e51c18b0e34285a15e64a70"
-                        scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
-                        width={300}
-                        height={250}
+                        type="native"
+                        containerId="container-03212cacd280051f4599929a27df3f3b"
+                        scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js"
                       />
                     </ErrorBoundary>
                   </div>
