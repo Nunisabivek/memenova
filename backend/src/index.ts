@@ -55,6 +55,37 @@ app.get('/health', (_req, res) => res.json({
   }
 }))
 
+// Live metrics for homepage
+app.get('/api/metrics', async (_req, res) => {
+  try {
+    if (!db) {
+      return res.json({
+        totals: { users: 0, projects: 0, memes: 0 },
+        last24h: { memes: 0, projects: 0 },
+        last7d: { memes: 0, projects: 0 },
+      })
+    }
+
+    const [users, projects, memes, memes24h, projects24h, memes7d, projects7d] = await Promise.all([
+      db.user.count(),
+      db.project.count(),
+      db.generation.count(),
+      db.generation.count({ where: { createdAt: { gte: new Date(Date.now() - 24*60*60*1000) } } }),
+      db.project.count({ where: { createdAt: { gte: new Date(Date.now() - 24*60*60*1000) } } }),
+      db.generation.count({ where: { createdAt: { gte: new Date(Date.now() - 7*24*60*60*1000) } } }),
+      db.project.count({ where: { createdAt: { gte: new Date(Date.now() - 7*24*60*60*1000) } } }),
+    ])
+
+    return res.json({
+      totals: { users, projects, memes },
+      last24h: { memes: memes24h, projects: projects24h },
+      last7d: { memes: memes7d, projects: projects7d },
+    })
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message || 'metrics failed' })
+  }
+})
+
 // Artificial delay helpers for free image generation (to show ads and throttle)
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const randomDelayMs = () => 5000 + Math.floor(Math.random() * 5000) // 5–10s

@@ -1,6 +1,6 @@
 "use client"
 import Link from 'next/link'
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
@@ -71,7 +71,12 @@ export default function HomePage() {
     }
   ]
 
-  // Removed mock stats; keep hero simple without fabricated numbers
+  // Live metrics for hero
+  const [metrics, setMetrics] = React.useState<{ totals: { users: number, projects: number, memes: number } } | null>(null)
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api/metrics` : '/api/metrics'
+    fetch(url).then(r => r.json()).then(setMetrics).catch(() => {})
+  }, [])
 
   return (
     <>
@@ -134,7 +139,26 @@ export default function HomePage() {
               </Button>
             </motion.div>
 
-            {/* No mock stats displayed */}
+            {/* Live stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto"
+            >
+              <div className="text-center">
+                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals.memes ?? '—'}</div>
+                <p className="text-secondary-600">Memes Generated</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals.projects ?? '—'}</div>
+                <p className="text-secondary-600">Projects</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals.users ?? '—'}</div>
+                <p className="text-secondary-600">Users</p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
