@@ -29,6 +29,7 @@ export default function StudioPage() {
   const [loading, setLoading] = useState(false)
   const [showAdOverlay, setShowAdOverlay] = useState(false)
   const [type, setType] = useState<'image' | 'video'>('image')
+  const [useCustomImage, setUseCustomImage] = useState<boolean>(true)
   const [videoCount, setVideoCount] = useState<number>(() => {
     if (typeof window === 'undefined') return 0
     return Number(localStorage.getItem('freeVideoCount') || '0')
@@ -53,7 +54,7 @@ export default function StudioPage() {
     try {
       let imageUrl: string | undefined
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || ''
-      if (file) {
+      if (useCustomImage && file) {
         const form = new FormData()
         form.append('file', file)
         const upload = await axios.post(baseUrl ? `${baseUrl}/upload` : '/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } })
@@ -76,9 +77,16 @@ export default function StudioPage() {
         setVideoCount(next)
         if (typeof window !== 'undefined') localStorage.setItem('freeVideoCount', String(next))
       } else {
+        const payload: any = { type: 'image', prompt, humor }
+        // If not using custom image, force AI image generation via OpenAI
+        if (!useCustomImage) {
+          payload.provider = 'OPENAI'
+        } else if (imageUrl) {
+          payload.imageUrl = imageUrl
+        }
         const { data } = await axios.post(
           baseUrl ? `${baseUrl}/generate` : '/api/generate',
-          { type: 'image', prompt, humor, imageUrl },
+          payload,
           { headers: { 'x-user-id': getUserId() || '' } }
         )
         setImageUrl(data.previewUrl)
@@ -143,6 +151,21 @@ export default function StudioPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Creation Area */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Mode toggle: Custom Meme (upload) vs AI Image */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <Card>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="text-sm text-secondary-700">Custom Meme (use my image)</div>
+                  <button
+                    onClick={() => setUseCustomImage(v => !v)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full ${useCustomImage ? 'bg-primary-600' : 'bg-secondary-300'}`}
+                    aria-label="Toggle custom image"
+                  >
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${useCustomImage ? 'translate-x-5' : 'translate-x-1'}`} />
+                  </button>
+                </CardContent>
+              </Card>
+            </motion.div>
             {/* Inline ad row inside studio main area */}
             <div className="flex flex-wrap gap-4 justify-center">
               <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
@@ -196,7 +219,8 @@ export default function StudioPage() {
               </Card>
             </motion.div>
 
-            {/* Image Upload */}
+            {/* Image Upload (shown only when using custom image) */}
+            {useCustomImage && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -263,6 +287,7 @@ export default function StudioPage() {
                 </CardContent>
               </Card>
             </motion.div>
+            )}
 
             {/* Humor Style Selection */}
             <motion.div
