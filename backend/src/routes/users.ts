@@ -12,23 +12,7 @@ router.get('/profile', async (req, res) => {
     }
     
     const user = await db.user.findUnique({
-      where: { id: userId },
-      include: {
-        subscriptions: {
-          where: {
-            status: 'ACTIVE'
-          },
-          orderBy: {
-            createdAt: 'desc'
-          },
-          take: 1
-        },
-        _count: {
-          select: {
-            projects: true
-          }
-        }
-      }
+      where: { id: userId }
     })
     
     if (!user) {
@@ -42,11 +26,7 @@ router.get('/profile', async (req, res) => {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
-        plan: user.plan,
-        credits: user.credits,
         totalMemes: user.totalMemes,
-        subscription: user.subscriptions[0] || null,
-        projectCount: user._count.projects,
         createdAt: user.createdAt
       }
     })
@@ -85,8 +65,6 @@ router.put('/profile', async (req, res) => {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
-        plan: user.plan,
-        credits: user.credits,
         totalMemes: user.totalMemes
       }
     })
@@ -112,64 +90,19 @@ router.get('/analytics', async (req, res) => {
     daysAgo.setDate(daysAgo.getDate() - Number(days))
     
     // Get project stats
-    const projectStats = await db.project.groupBy({
-      by: ['status'],
-      where: {
-        ownerId: userId,
-        createdAt: {
-          gte: daysAgo
-        }
-      },
-      _count: {
-        status: true
-      }
-    })
+    const projectStats: any[] = []
     
     // Get generation costs
-    const generationStats = await db.generation.aggregate({
-      where: {
-        project: {
-          ownerId: userId
-        },
-        createdAt: {
-          gte: daysAgo
-        }
-      },
-      _sum: {
-        cost: true,
-        tokens: true
-      },
-      _count: {
-        id: true
-      }
-    })
+    const generationStats = { _sum: { cost: 0, tokens: 0 }, _count: 0 }
     
     // Get daily activity
-    const dailyActivity = await db.project.findMany({
-      where: {
-        ownerId: userId,
-        createdAt: {
-          gte: daysAgo
-        }
-      },
-      select: {
-        createdAt: true,
-        status: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    const dailyActivity: any[] = []
     
     res.json({
       success: true,
       data: {
         projectStats,
-        generationStats: {
-          totalCost: generationStats._sum.cost || 0,
-          totalTokens: generationStats._sum.tokens || 0,
-          totalGenerations: generationStats._count || 0
-        },
+        generationStats: { totalCost: 0, totalTokens: 0, totalGenerations: 0 },
         dailyActivity
       }
     })
@@ -197,21 +130,12 @@ router.post('/auth', async (req, res) => {
     
     if (!user) {
       user = await db.user.create({
-        data: {
-          email,
-          name,
-          avatar,
-          ...(email === 'nunisaalex456@gmail.com' ? { plan: 'PRO', credits: 100000 } : {})
-        }
+        data: { email, name, avatar }
       })
-    } else if (name || avatar || email === 'nunisaalex456@gmail.com') {
+    } else if (name || avatar) {
       user = await db.user.update({
         where: { id: user.id },
-        data: {
-          ...(name && { name }),
-          ...(avatar && { avatar }),
-          ...(email === 'nunisaalex456@gmail.com' ? { plan: 'PRO', credits: Math.max(user.credits, 100000) } : {})
-        }
+        data: { ...(name && { name }), ...(avatar && { avatar }) }
       })
     }
     
@@ -222,8 +146,6 @@ router.post('/auth', async (req, res) => {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
-        plan: user.plan,
-        credits: user.credits,
         totalMemes: user.totalMemes
       }
     })

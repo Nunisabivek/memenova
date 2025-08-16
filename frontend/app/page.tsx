@@ -24,16 +24,8 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary'
 
 export default function HomePage() {
   const router = useRouter()
-  // Redirect visitors from search engines directly to studio for faster creation
-  useEffect(() => {
-    try {
-      const ref = document.referrer || ''
-      const fromSearch = /(google\.|bing\.|duckduckgo\.|yahoo\.|yandex\.)/i.test(ref)
-      if (fromSearch) {
-        router.replace('/studio')
-      }
-    } catch {}
-  }, [router])
+  // Always land users on the studio (single-page app)
+  useEffect(() => { router.replace('/studio') }, [router])
   const features = [
     {
       icon: Wand2,
@@ -73,18 +65,7 @@ export default function HomePage() {
     }
   ]
 
-  // Live metrics for hero
-  const [metrics, setMetrics] = React.useState<{ totals: { users: number, projects: number, memes: number } } | null>(null)
-  useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api/metrics` : '/api/metrics'
-    fetch(url)
-      .then(async (r) => {
-        if (!r.ok) return null
-        try { return await r.json() } catch { return null }
-      })
-      .then((data) => setMetrics(data))
-      .catch(() => {})
-  }, [])
+  // Remove metrics/extra sections to keep a single-page generator
 
   return (
     <>

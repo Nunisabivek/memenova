@@ -9,8 +9,7 @@ import {
   Share2, 
   Image as ImageIcon, 
   Sparkles, 
-  Zap,
-  Crown,
+  Zap, 
   RefreshCw,
   Copy,
   Heart
@@ -28,12 +27,7 @@ export default function StudioPage() {
   const [humor, setHumor] = useState('sarcastic')
   const [loading, setLoading] = useState(false)
   const [showAdOverlay, setShowAdOverlay] = useState(false)
-  const [type, setType] = useState<'image' | 'video'>('image')
   const [useCustomImage, setUseCustomImage] = useState<boolean>(true)
-  const [videoCount, setVideoCount] = useState<number>(() => {
-    if (typeof window === 'undefined') return 0
-    return Number(localStorage.getItem('freeVideoCount') || '0')
-  })
   const [file, setFile] = useState<File | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -51,50 +45,37 @@ export default function StudioPage() {
     setLoading(true)
     setShowAdOverlay(true)
     setImageUrl(null)
+    const start = Date.now()
     try {
-      let imageUrl: string | undefined
+      let uploadedUrl: string | undefined
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || ''
       if (useCustomImage && file) {
         const form = new FormData()
         form.append('file', file)
         const upload = await axios.post(baseUrl ? `${baseUrl}/upload` : '/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } })
-        imageUrl = upload.data.url
+        uploadedUrl = upload.data.url
       }
-      if (type === 'video') {
-        // Gate: allow only 3 free videos without account, at 720p quality notice
-        if (videoCount >= 3) {
-          alert('Free limit reached: Create an account to continue creating video memes or upgrade for HD quality.')
-          return
-        }
-        // Simulate a low-res 720p result preview info
-        const { data } = await axios.post(
-          baseUrl ? `${baseUrl}/generate` : '/api/generate',
-          { type: 'image', prompt: `${prompt} (video 720p preview frame)`, humor, imageUrl },
-          { headers: { 'x-user-id': getUserId() || '' } }
-        )
-        setImageUrl(data.previewUrl)
-        const next = videoCount + 1
-        setVideoCount(next)
-        if (typeof window !== 'undefined') localStorage.setItem('freeVideoCount', String(next))
-      } else {
-        const payload: any = { type: 'image', prompt, humor }
-        // If not using custom image, force AI image generation via OpenAI
-        if (!useCustomImage) {
-          payload.provider = 'OPENAI'
-        } else if (imageUrl) {
-          payload.imageUrl = imageUrl
-        }
-        const { data } = await axios.post(
-          baseUrl ? `${baseUrl}/generate` : '/api/generate',
-          payload,
-          { headers: { 'x-user-id': getUserId() || '' } }
-        )
-        setImageUrl(data.previewUrl)
+      const payload: any = { type: 'image', prompt, humor }
+      if (!useCustomImage) {
+        payload.provider = 'OPENAI'
+      } else if (uploadedUrl) {
+        payload.imageUrl = uploadedUrl
       }
+      const { data } = await axios.post(
+        baseUrl ? `${baseUrl}/generate` : '/api/generate',
+        payload,
+        { headers: { 'x-user-id': getUserId() || '' } }
+      )
+      setImageUrl(data.previewUrl)
     } finally {
-      setLoading(false)
-      // keep overlay visible a bit longer for ad viewability if needed
-      setTimeout(() => setShowAdOverlay(false), 600)
+      const elapsed = Date.now() - start
+      const minMs = 5000
+      const maxExtra = 3000
+      const waitMs = elapsed >= minMs ? 0 : Math.min(minMs - elapsed + Math.floor(Math.random() * maxExtra), 8000)
+      setTimeout(() => {
+        setLoading(false)
+        setShowAdOverlay(false)
+      }, waitMs)
     }
   }
 
@@ -175,23 +156,12 @@ export default function StudioPage() {
                 <AdsterraBanner type="native" containerId="studio-inline-2" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
               </ErrorBoundary>
             </div>
-            {/* Type Selector */}
+            {/* Single mode: Image memes only */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card>
                 <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm">
-                    <button
-                      onClick={() => setType('image')}
-                      className={`px-3 py-1.5 rounded-md border ${type==='image' ? 'bg-primary-600 text-white border-primary-600' : 'border-secondary-300 text-secondary-700 hover:bg-secondary-50'}`}
-                    >Image</button>
-                    <button
-                      onClick={() => setType('video')}
-                      className={`px-3 py-1.5 rounded-md border ${type==='video' ? 'bg-accent-600 text-white border-accent-600' : 'border-secondary-300 text-secondary-700 hover:bg-secondary-50'}`}
-                    >Video</button>
-                  </div>
-                  <div className="text-xs text-secondary-600">
-                    {type==='video' ? `Free: ${Math.max(0, 3 - videoCount)} of 3 left · Output: 720p preview` : 'Unlimited free image memes'}
-                  </div>
+                  <div className="text-sm text-secondary-700">Mode: Image Memes</div>
+                  <div className="text-xs text-secondary-600">Fast generation · Free</div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -341,7 +311,7 @@ export default function StudioPage() {
                 icon={loading ? RefreshCw : Wand2}
                 className="text-lg px-8 py-4 hero-glow"
               >
-                {loading ? 'Creating Magic...' : `Generate ${type === 'video' ? 'Video' : 'Meme'}`}
+                {loading ? 'Creating Magic...' : 'Generate Meme'}
               </Button>
             </motion.div>
 
@@ -381,9 +351,7 @@ export default function StudioPage() {
                           alt="Generated meme" 
                           className="w-full max-w-2xl mx-auto rounded-lg shadow-lg"
                         />
-                        <div className="mt-3 text-xs text-secondary-600 text-center">
-                          {type==='video' ? 'Free preview frame from 720p video. Create account for 3 full video exports. Upgrade for HD.' : 'Free image generated. Upgrade for watermark-free HD and auto-publish.'}
-                        </div>
+                        <div className="mt-3 text-xs text-secondary-600 text-center">Free image generated.</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -394,35 +362,17 @@ export default function StudioPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Pro Upgrade */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <Card className="bg-gradient-to-br from-accent-500 to-primary-600 text-white border-0">
-                <CardContent className="p-6 text-center">
-                  <Crown className="w-12 h-12 mx-auto mb-4 text-yellow-300" />
-                  <h3 className="text-xl font-bold mb-2">Upgrade to Pro</h3>
-                  <p className="text-accent-100 mb-4 text-sm">
-                    Unlock video memes, remove watermarks, and get priority generation
-                  </p>
-                  <Button variant="secondary" className="w-full bg-white text-accent-600 hover:bg-accent-50">
-                    Upgrade Now
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+            {/* Removed upgrade card */}
 
             {/* Ads directly under upgrade card */}
             <Card>
               <CardContent className="p-4 space-y-3">
                 <p className="text-sm font-medium text-secondary-700">Sponsored</p>
                 <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
-                  <AdsterraBanner type="native" containerId="sidebar-under-upgrade-1" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+                  <AdsterraBanner type="native" containerId="container-03212cacd280051f4599929a27df3f3b" scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
                 </ErrorBoundary>
                 <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
-                  <AdsterraBanner type="native" containerId="sidebar-under-upgrade-2" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+                  <AdsterraBanner type="native" containerId="container-03212cacd280051f4599929a27df3f3b" scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
                 </ErrorBoundary>
               </CardContent>
             </Card>
@@ -467,8 +417,8 @@ export default function StudioPage() {
                 <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
                   <AdsterraBanner
                     type="native"
-                    containerId="container-right-300x250"
-                    scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js"
+                    containerId="container-03212cacd280051f4599929a27df3f3b"
+                    scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js"
                   />
                 </ErrorBoundary>
               </CardContent>
@@ -488,8 +438,8 @@ export default function StudioPage() {
               <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
                 <AdsterraBanner
                   type="native"
-                  containerId="container-bottom-300x250"
-                  scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js"
+                  containerId="container-03212cacd280051f4599929a27df3f3b"
+                  scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js"
                 />
               </ErrorBoundary>
             </CardContent>
@@ -500,7 +450,7 @@ export default function StudioPage() {
         <div className="fixed bottom-2 left-0 right-0 mx-auto w-full max-w-md px-4 sm:hidden z-40">
           <div className="rounded-md border border-secondary-200 bg-white/90 backdrop-blur p-2 shadow-lg flex justify-center">
             <ErrorBoundary fallback={<div className="w-[320px] h-[50px] flex items-center justify-center text-secondary-500">Ad</div>}>
-              <AdsterraBanner type="native" containerId="studio-mobile-sticky" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+              <AdsterraBanner type="native" containerId="container-03212cacd280051f4599929a27df3f3b" scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
             </ErrorBoundary>
           </div>
         </div>
