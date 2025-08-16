@@ -89,28 +89,7 @@ app.post('/generate', async (req, res) => {
         return res.json({ ok: true, previewUrl: url, text: memeContent?.text, suggestions: memeContent?.suggestions })
       }
 
-      // No image uploaded → prefer classic template meme with caption overlay
-      try {
-        const templates = await fetchTopTemplates(100)
-        const chosen = templates[Math.floor(Math.random() * Math.max(1, templates.length))]
-        if (chosen?.Url) {
-          const buffer = await composeTemplateMeme({
-            templateUrl: chosen.Url,
-            topText: memeContent?.topText || memeContent?.text || prompt,
-            bottomText: memeContent?.bottomText || '',
-          })
-          const key = `generated/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-          const uploadsDir = path.join(process.cwd(), 'uploads')
-          try { await fs.mkdir(uploadsDir, { recursive: true }) } catch {}
-          const filePath = path.join(uploadsDir, path.basename(key))
-          await fs.writeFile(filePath, buffer)
-          const baseUrl = `${req.protocol}://${req.get('host')}`
-          const url = `${baseUrl}/uploads/${path.basename(key)}`
-          return res.json({ ok: true, previewUrl: url, text: memeContent?.text, suggestions: memeContent?.suggestions })
-        }
-      } catch {}
-
-      // Fallback: ask DALL·E to render the caption on image (may look illustrative)
+      // No image uploaded → generate a new image with DALL·E that embeds the caption
       let finalImageUrl = ''
       try {
         finalImageUrl = await generateMemeImage(memeContent.imagePrompt, memeContent.text)

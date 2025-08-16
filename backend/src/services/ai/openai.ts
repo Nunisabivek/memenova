@@ -57,7 +57,9 @@ ${request.imageUrl ? `Base it on this image context: ${request.imageUrl}` : ''}
 Return compact JSON with fields: {"text": string, "topText": string, "bottomText": string, "imagePrompt": string, "suggestions": string[3] }
 Rules:
 - topText and bottomText should be short, punchy, and read like classic meme captions (UPPERCASE OK).
-- If the meme works better as a single line, put the leading phrase in topText and the punchline in bottomText.`
+- If the meme works better as a single line, put the leading phrase in topText and the punchline in bottomText.
+- For the imagePrompt, describe a photorealistic scene that matches the caption. Avoid "cartoon" or "illustration" unless explicitly requested.
+- If a real person is referenced (e.g., Elon Musk), describe a generic lookalike without naming the person in the imagePrompt (e.g., "photorealistic tech billionaire at a press conference, sleek suit, smirking").`
 
   try {
     const completion = await openai.chat.completions.create({
