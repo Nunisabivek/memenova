@@ -120,10 +120,10 @@ export default function StudioPage() {
             <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
               <AdsterraBanner
                 type="iframe"
-                keyId="de0016110e51c18b0e34285a15e64a70"
-                scriptSrc="//www.highperformanceformat.com/de0016110e51c18b0e34285a15e64a70/invoke.js"
-                width={300}
-                height={250}
+                keyId="0f7a194bf43ea08ffcd39cb5962d011e"
+                scriptSrc="//meantimesubside.com/0f7a194bf43ea08ffcd39cb5962d011e/invoke.js"
+                width={728}
+                height={90}
               />
             </ErrorBoundary>
           </div>
@@ -147,13 +147,10 @@ export default function StudioPage() {
                 </CardContent>
               </Card>
             </motion.div>
-            {/* Inline ad row inside studio main area */}
+            {/* Inline ad row inside studio main area (iframe 728x90) */}
             <div className="flex flex-wrap gap-4 justify-center">
-              <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
-                <AdsterraBanner type="native" containerId="studio-inline-1" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
-              </ErrorBoundary>
-              <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
-                <AdsterraBanner type="native" containerId="studio-inline-2" scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+              <ErrorBoundary fallback={<div className="w-[728px] h-[90px] flex items-center justify-center text-secondary-500">Ad</div>}>
+                <AdsterraBanner type="iframe" keyId="0f7a194bf43ea08ffcd39cb5962d011e" scriptSrc="//meantimesubside.com/0f7a194bf43ea08ffcd39cb5962d011e/invoke.js" width={728} height={90} />
               </ErrorBoundary>
             </div>
             {/* Single mode: Image memes only */}
@@ -368,11 +365,13 @@ export default function StudioPage() {
             <Card>
               <CardContent className="p-4 space-y-3">
                 <p className="text-sm font-medium text-secondary-700">Sponsored</p>
+                {/* Keep only one native unit */}
                 <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
                   <AdsterraBanner type="native" containerId="container-03212cacd280051f4599929a27df3f3b" scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
                 </ErrorBoundary>
-                <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad</div>}>
-                  <AdsterraBanner type="native" containerId="container-03212cacd280051f4599929a27df3f3b" scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+                {/* Additional slot uses iframe 160x600 */}
+                <ErrorBoundary fallback={<div className="w-[160px] h-[600px] flex items-center justify-center text-secondary-500">Ad</div>}>
+                  <AdsterraBanner type="iframe" keyId="4e2124cd501a767e7a7972c2f0c2fcf7" scriptSrc="//meantimesubside.com/4e2124cd501a767e7a7972c2f0c2fcf7/invoke.js" width={160} height={600} />
                 </ErrorBoundary>
               </CardContent>
             </Card>
@@ -414,12 +413,8 @@ export default function StudioPage() {
             <Card>
               <CardContent className="p-4">
                 <p className="text-sm font-medium text-secondary-700 mb-3">Sponsored</p>
-                <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
-                  <AdsterraBanner
-                    type="native"
-                    containerId="container-03212cacd280051f4599929a27df3f3b"
-                    scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js"
-                  />
+                <ErrorBoundary fallback={<div className="w-[160px] h-[600px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
+                  <AdsterraBanner type="iframe" keyId="4e2124cd501a767e7a7972c2f0c2fcf7" scriptSrc="//meantimesubside.com/4e2124cd501a767e7a7972c2f0c2fcf7/invoke.js" width={160} height={600} />
                 </ErrorBoundary>
               </CardContent>
             </Card>
@@ -435,12 +430,8 @@ export default function StudioPage() {
         >
           <Card>
             <CardContent className="p-6 flex justify-center">
-              <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
-                <AdsterraBanner
-                  type="native"
-                  containerId="container-03212cacd280051f4599929a27df3f3b"
-                  scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js"
-                />
+              <ErrorBoundary fallback={<div className="w-[728px] h-[90px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
+                <AdsterraBanner type="iframe" keyId="0f7a194bf43ea08ffcd39cb5962d011e" scriptSrc="//meantimesubside.com/0f7a194bf43ea08ffcd39cb5962d011e/invoke.js" width={728} height={90} />
               </ErrorBoundary>
             </CardContent>
           </Card>
@@ -450,7 +441,7 @@ export default function StudioPage() {
         <div className="fixed bottom-2 left-0 right-0 mx-auto w-full max-w-md px-4 sm:hidden z-40">
           <div className="rounded-md border border-secondary-200 bg-white/90 backdrop-blur p-2 shadow-lg flex justify-center">
             <ErrorBoundary fallback={<div className="w-[320px] h-[50px] flex items-center justify-center text-secondary-500">Ad</div>}>
-              <AdsterraBanner type="native" containerId="container-03212cacd280051f4599929a27df3f3b" scriptSrc="//meantimesubside.com/03212cacd280051f4599929a27df3f3b/invoke.js" />
+              <AdsterraBanner type="iframe" keyId="0f7a194bf43ea08ffcd39cb5962d011e" scriptSrc="//meantimesubside.com/0f7a194bf43ea08ffcd39cb5962d011e/invoke.js" width={728} height={90} />
             </ErrorBoundary>
           </div>
         </div>
@@ -470,13 +461,9 @@ export default function StudioPage() {
                 </div>
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <p className="text-sm font-medium text-secondary-700">Sponsored Content</p>
-                  <div className="w-full h-64 bg-secondary-100 rounded-lg flex items-center justify-center">
-                    <ErrorBoundary fallback={<div className="w-[300px] h-[250px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
-                      <AdsterraBanner
-                        type="native"
-                        containerId="container-03212cacd280051f4599929a27df3f3b"
-                        scriptSrc="//pl27424868.profitableratecpm.com/03212cacd280051f4599929a27df3f3b/invoke.js"
-                      />
+                  <div className="w-full flex items-center justify-center">
+                    <ErrorBoundary fallback={<div className="w-[728px] h-[90px] flex items-center justify-center text-secondary-500">Ad loading...</div>}>
+                      <AdsterraBanner type="iframe" keyId="0f7a194bf43ea08ffcd39cb5962d011e" scriptSrc="//meantimesubside.com/0f7a194bf43ea08ffcd39cb5962d011e/invoke.js" width={728} height={90} />
                     </ErrorBoundary>
                   </div>
                   <p className="text-xs text-secondary-500 text-center">Your meme will appear once generation is complete. Thanks for your patience!</p>
