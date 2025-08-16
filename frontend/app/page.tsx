@@ -155,26 +155,7 @@ export default function HomePage() {
               </Button>
             </motion.div>
 
-            {/* Live stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto"
-            >
-              <div className="text-center">
-                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals?.memes ?? '—'}</div>
-                <p className="text-secondary-600">Memes Generated</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals?.projects ?? '—'}</div>
-                <p className="text-secondary-600">Projects</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-secondary-900">{metrics?.totals?.users ?? '—'}</div>
-                <p className="text-secondary-600">Users</p>
-              </div>
-            </motion.div>
+            {/* Live stats removed for simplicity */}
 
             {/* Inline ads below metrics */}
             <div className="mt-10 flex flex-wrap gap-4 justify-center">
