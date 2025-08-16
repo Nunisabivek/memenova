@@ -160,6 +160,11 @@ app.post('/generate', async (req, res) => {
         let finalImageUrl: string | undefined = imageUrl
         let renderedBuffer: Buffer | null = null
 
+        // If user did not upload an image, prefer OpenAI image generation when available
+        if (!finalImageUrl && process.env.OPENAI_API_KEY) {
+          provider = 'OPENAI'
+        }
+
         if (style === 'TEMPLATE') {
           const templates = await fetchTopTemplates(100)
           if (!topText || !bottomText) {
