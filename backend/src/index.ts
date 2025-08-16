@@ -6,7 +6,7 @@ import multer from 'multer'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { generateMemeContent, generateMemeImage } from './services/ai/openai'
-import { composeMemeOnImage } from './services/meme-template'
+import { composeMemeOnImage, composeTemplateMeme, fetchTopTemplates } from './services/meme-template'
 
 const app = express()
 const logger = pino({ level: process.env.LOG_LEVEL || 'info' })
@@ -71,9 +71,14 @@ app.post('/generate', async (req, res) => {
 
     try {
       const memeContent = await generateMemeContent({ prompt, humor, imageUrl })
-      // If an image was uploaded, overlay text; else generate new image
+      // If an image was uploaded, overlay top/bottom meme text
       if (imageUrl) {
-        const buffer = await composeMemeOnImage({ imageUrl, text: memeContent?.text || prompt })
+        const buffer = await composeMemeOnImage({
+          imageUrl,
+          text: memeContent?.text || prompt,
+          topText: memeContent?.topText,
+          bottomText: memeContent?.bottomText,
+        })
         const key = `generated/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
         const uploadsDir = path.join(process.cwd(), 'uploads')
         try { await fs.mkdir(uploadsDir, { recursive: true }) } catch {}
@@ -82,15 +87,37 @@ app.post('/generate', async (req, res) => {
         const baseUrl = `${req.protocol}://${req.get('host')}`
         const url = `${baseUrl}/uploads/${path.basename(key)}`
         return res.json({ ok: true, previewUrl: url, text: memeContent?.text, suggestions: memeContent?.suggestions })
-      } else {
-        let finalImageUrl = ''
-        try {
-          finalImageUrl = await generateMemeImage(memeContent.imagePrompt, memeContent.text)
-        } catch (e) {
-          finalImageUrl = `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent(memeContent.text)}`
-        }
-        return res.json({ ok: true, previewUrl: finalImageUrl, text: memeContent?.text, suggestions: memeContent?.suggestions })
       }
+
+      // No image uploaded → prefer classic template meme with caption overlay
+      try {
+        const templates = await fetchTopTemplates(100)
+        const chosen = templates[Math.floor(Math.random() * Math.max(1, templates.length))]
+        if (chosen?.Url) {
+          const buffer = await composeTemplateMeme({
+            templateUrl: chosen.Url,
+            topText: memeContent?.topText || memeContent?.text || prompt,
+            bottomText: memeContent?.bottomText || '',
+          })
+          const key = `generated/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+          const uploadsDir = path.join(process.cwd(), 'uploads')
+          try { await fs.mkdir(uploadsDir, { recursive: true }) } catch {}
+          const filePath = path.join(uploadsDir, path.basename(key))
+          await fs.writeFile(filePath, buffer)
+          const baseUrl = `${req.protocol}://${req.get('host')}`
+          const url = `${baseUrl}/uploads/${path.basename(key)}`
+          return res.json({ ok: true, previewUrl: url, text: memeContent?.text, suggestions: memeContent?.suggestions })
+        }
+      } catch {}
+
+      // Fallback: ask DALL·E to render the caption on image (may look illustrative)
+      let finalImageUrl = ''
+      try {
+        finalImageUrl = await generateMemeImage(memeContent.imagePrompt, memeContent.text)
+      } catch (e) {
+        finalImageUrl = `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent(memeContent.text)}`
+      }
+      return res.json({ ok: true, previewUrl: finalImageUrl, text: memeContent?.text, suggestions: memeContent?.suggestions })
     } catch (aiErr: any) {
       const previewUrl = imageUrl || `https://dummyimage.com/1024x576/111827/ffffff&text=${encodeURIComponent(prompt)}`
       return res.json({ ok: true, previewUrl, fallback: true, error: aiErr?.message })

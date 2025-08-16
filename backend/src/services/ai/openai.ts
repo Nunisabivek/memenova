@@ -22,6 +22,8 @@ export interface MemeGenerationResponse {
   suggestions: string[]
   tokens: number
   cost: number
+  topText?: string
+  bottomText?: string
 }
 
 export async function generateMemeContent(request: MemeGenerationRequest): Promise<MemeGenerationResponse> {
@@ -52,7 +54,10 @@ Keep it appropriate but engaging. Make it shareable and viral-worthy.`
   const userPrompt = `Create a meme about: "${request.prompt}"
 ${request.imageUrl ? `Base it on this image context: ${request.imageUrl}` : ''}
 
-Return JSON with: text, imagePrompt, suggestions (array of 3 alternatives)`
+Return compact JSON with fields: {"text": string, "topText": string, "bottomText": string, "imagePrompt": string, "suggestions": string[3] }
+Rules:
+- topText and bottomText should be short, punchy, and read like classic meme captions (UPPERCASE OK).
+- If the meme works better as a single line, put the leading phrase in topText and the punchline in bottomText.`
 
   try {
     const completion = await openai.chat.completions.create({
@@ -77,6 +82,8 @@ Return JSON with: text, imagePrompt, suggestions (array of 3 alternatives)`
 
     return {
       text: parsed.text,
+      topText: parsed.topText,
+      bottomText: parsed.bottomText,
       imagePrompt: parsed.imagePrompt,
       suggestions: parsed.suggestions || [],
       tokens,
