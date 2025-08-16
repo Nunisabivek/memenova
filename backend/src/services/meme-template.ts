@@ -41,19 +41,35 @@ export async function composeTemplateMeme(args: {
 	const scale = (meta.width && targetWidth) ? targetWidth / meta.width : 1
 	const targetHeight = meta.height ? Math.round(meta.height * scale) : undefined
 
-	// SVG overlay generator for top/bottom text
+	// SVG overlay generator for top/bottom text with wrapping
 	const createTextSvg = (text: string, position: 'top'|'bottom') => {
 		const W = targetWidth
 		const H = targetHeight || Math.round((meta.height || 1024) * scale)
-		const fontSize = Math.max(24, Math.round(W * 0.06))
-		const y = position === 'top' ? fontSize * 1.3 : H - fontSize * 0.5
+		const fontSize = Math.max(28, Math.round(W * 0.065))
 		const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+		const words = (text || '').trim().toUpperCase().split(/\s+/)
+		const maxCharsPerLine = Math.max(10, Math.floor(W / (fontSize * 0.6)))
+		const lines: string[] = []
+		let line = ''
+		for (const w of words) {
+			if ((line + ' ' + w).trim().length > maxCharsPerLine) {
+				if (line) lines.push(line)
+				line = w
+			} else {
+				line = (line ? line + ' ' : '') + w
+			}
+		}
+		if (line) lines.push(line)
+		const totalHeight = lines.length * (fontSize * 1.1)
+		const startY = position === 'top' ? fontSize * 1.2 : (H - (fontSize * 0.5) - (lines.length > 1 ? totalHeight - fontSize : 0))
+		const tspans = lines.map((ln, i) => `<tspan x="50%" dy="${i === 0 ? 0 : fontSize * 1.1}">${esc(ln)}</tspan>`).join('')
 		return Buffer.from(
 			`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
 				<style>
-					text { font-family: Impact, 'Arial Black', sans-serif; font-weight: 900; fill: #ffffff; stroke: #000000; stroke-width: ${Math.max(2, Math.round(fontSize/10))}px; paint-order: stroke fill; letter-spacing: 1px; }
+					@font-face { font-family: IMPACTFALLBACK; src: local('Impact'), local('Arial Black'); }
+					text { font-family: IMPACTFALLBACK, Impact, 'Arial Black', sans-serif; font-weight: 900; fill: #ffffff; stroke: #000000; stroke-width: ${Math.max(2, Math.round(fontSize/10))}; paint-order: stroke fill; letter-spacing: 1px; }
 				</style>
-				<text x="50%" y="${y}" font-size="${fontSize}" text-anchor="middle">${esc(text).toUpperCase()}</text>
+				<text x="50%" y="${startY}" font-size="${fontSize}" text-anchor="middle">${tspans}</text>
 			</svg>`
 		)
 	}
@@ -89,21 +105,7 @@ export async function composeMemeOnImage(args: {
 	const scale = (meta.width && targetWidth) ? targetWidth / meta.width : 1
 	const targetHeight = meta.height ? Math.round(meta.height * scale) : undefined
 
-	const createTextSvg = (t: string, position: 'top'|'bottom') => {
-		const W = targetWidth
-		const H = targetHeight || Math.round((meta.height || 1024) * scale)
-		const fontSize = Math.max(24, Math.round(W * 0.06))
-		const y = position === 'top' ? fontSize * 1.3 : H - fontSize * 0.5
-		const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-		return Buffer.from(
-			`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-				<style>
-					text { font-family: Impact, 'Arial Black', sans-serif; font-weight: 900; fill: #ffffff; stroke: #000000; stroke-width: ${Math.max(2, Math.round(fontSize/10))}px; paint-order: stroke fill; letter-spacing: 1px; }
-				</style>
-				<text x="50%" y="${y}" font-size="${fontSize}" text-anchor="middle">${esc(t).toUpperCase()}</text>
-			</svg>`
-		)
-	}
+	const createTextSvg2 = (t: string, position: 'top'|'bottom') => createTextSvg(t, position)
 
 	let top = topText
 	let bottom = bottomText
@@ -114,8 +116,8 @@ export async function composeMemeOnImage(args: {
 	}
 
 	const overlays: { input: Buffer }[] = []
-	if (top) overlays.push({ input: createTextSvg(top, 'top') })
-	if (bottom) overlays.push({ input: createTextSvg(bottom, 'bottom') })
+	if (top) overlays.push({ input: createTextSvg2(top, 'top') })
+	if (bottom) overlays.push({ input: createTextSvg2(bottom, 'bottom') })
 
 	let img = base.resize({ width: targetWidth })
 	if (overlays.length) {
