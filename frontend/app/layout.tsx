@@ -33,6 +33,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="canonical" href="https://memenova.app/" />
+        {/* JSON-LD: Organization */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'MemeNova',
+          url: 'https://memenova.app/',
+          logo: 'https://memenova.app/icon.png'
+        }) }} />
+        {/* JSON-LD: WebSite + SearchAction */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'MemeNova – Free AI Meme Generator',
+          url: 'https://memenova.app/',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: 'https://memenova.app/studio?q={search_term_string}',
+            'query-input': 'required name=search_term_string'
+          }
+        }) }} />
       </head>
       <body className="min-h-screen bg-gradient-to-br from-primary-50/50 via-white to-accent-50/50 text-secondary-900 font-sans antialiased">
         {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (

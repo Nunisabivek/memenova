@@ -7,6 +7,8 @@ const nextConfig = {
       { protocol: 'https', hostname: '**' }
     ]
   },
+  trailingSlash: false,
+  poweredByHeader: false,
   async rewrites() {
     // Proxy ALL /api/* calls to the backend URL in every environment
     const backend = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
